@@ -1,0 +1,23 @@
+<?php
+
+function trackfield_map_install() {
+  drupal_load('module', 'content');
+  content_notify('install', 'trackfield_map');
+}
+
+function trackfield_map_uninstall() {
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'trackfield_map');
+}
+
+function trackfield_map_enable() {
+  drupal_load('module', 'content');
+  content_notify('enable', 'trackfield_map');
+}
+
+function trackfield_map_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'trackfield_map');
+}
+
+?>

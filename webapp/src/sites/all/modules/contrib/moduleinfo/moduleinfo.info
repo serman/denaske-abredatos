@@ -1,0 +1,12 @@
+; $Id: moduleinfo.info,v 1.1 2008/09/05 19:08:44 jabapyth Exp $
+name = ModuleInfo
+description = "Adds module-specific data to the admin/build/modules page, telling the user about what pages, blocks, and content-types are created by a module."
+core = 6.x
+package = Administration
+
+; Information added by drupal.org packaging script on 2009-06-04
+version = "6.x-1.2"
+core = "6.x"
+project = "moduleinfo"
+datestamp = "1244133695"
+

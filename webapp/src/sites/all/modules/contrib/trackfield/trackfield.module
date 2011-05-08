@@ -1,0 +1,565 @@
+<?php
+
+/*
+ * When we compare tracks, how shall we normalise them?
+ */
+
+DEFINE('TRACKFIELD_NORM_NOTHING', 'N');
+DEFINE('TRACKFIELD_NORM_FORWARD', 'F');
+DEFINE('TRACKFIELD_NORM_REVERSE', 'R');
+DEFINE('TRACKFIELD_NORM_AS_CLIMB', 'C');
+DEFINE('TRACKFIELD_NORM_AS_DESCENT', 'D');
+
+DEFINE('TRACKFIELD_DEFAULT_NORM', TRACKFIELD_NORM_NOTHING);
+
+global $_trackfield_norm_types;
+$_trackfield_norm_types = array(
+  TRACKFIELD_NORM_NOTHING => 'Default',
+  TRACKFIELD_NORM_FORWARD => 'Forward',
+  TRACKFIELD_NORM_REVERSE => 'Reverse',
+  TRACKFIELD_NORM_AS_CLIMB => 'As Climb',
+  TRACKFIELD_NORM_AS_DESCENT => 'As Descent'
+);
+
+DEFINE(TRACKFIELD_METRIC_M_MAX, 10000);
+
+/*
+ * Hook menu.
+ */
+
+function trackfield_menu() {
+  $items = array();
+
+  $access = user_access('administer trackfield');
+
+  $items['admin/settings/trackfield'] = array(
+    'title' => t('Trackfield'),
+    'description' => t('Settings for track co-ordinate fields.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_trackfield_admin_units'),
+    'access arguments' => array('administer trackfield'));
+
+  $items['admin/settings/trackfield/units'] = array(
+    'title' => t('Units'),
+    'description' => t('Settings for track co-ordinate fields.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_trackfield_admin_units'),
+    'access arguments' => array('administer trackfield'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10);
+
+  return $items;
+}
+
+/*
+ * Hook nodeapi.
+ */
+ 
+function trackfield_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  switch($op) {
+    case 'delete':
+      db_query("DELETE FROM {trackfield_datasets} WHERE nid = %d", $node->nid);
+      break;
+
+    case 'delete revision':
+      db_query("DELETE FROM {trackfield_datasets} WHERE nid = %d and vid = %d", $node->nid, $node->vid);
+      break;
+      
+    case 'submit':
+      /* Overwrite locations with ours if previously calculated */
+
+      if (is_array($node->trackfield_locations)) {
+        $tid = 0;
+        $lid = 0;
+        while (array_key_exists($tid, $node->trackfield_locations)) {
+          if (array_key_exists($lid, $node->locations)) {
+            /*
+             * We cannot just overwrite existing locations or they will
+             * be created and not ammended by the loction module.
+             */
+            $node->locations[$lid]['longitude'] = $node->trackfield_locations[$tid]['longitude'];
+            $node->locations[$lid]['latitude'] = $node->trackfield_locations[$tid]['latitude'];
+          } else {
+            $node->locations[$lid] = $node->trackfield_locations[$tid];
+          }
+          $tid++;
+          $lid++;
+        }
+        /* Remove any other locations */
+        while (array_key_exists($lid, $node->locations)) {
+          $node->locations[$lid]['longitude'] = '';
+          $node->locations[$lid]['latitude'] = '';
+          $lid++;
+        }
+      }
+      break;
+  }
+}
+
+/*
+ * Implementation of hook_field_info().
+ */
+function trackfield_field_info() {
+  return array(
+    'track' => array('label' => 'Track'),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function trackfield_field_settings($op, $field) {
+  switch ($op) {
+    case 'database columns':
+    if ($field['type'] == 'track') {
+      $columns = array(
+        // Value is the raw input
+        'value' => array('type' => 'text', 'size' => 'big', 'sortable' => FALSE),
+        'valuetype' => array('type' => 'text', 'size' => 'medium', 'sortable' => FALSE),
+        'trackdatasets' => array('type' => 'text', 'size' => 'medium', 'sortable' => FALSE),
+        'attributes' => array('type' => 'text', 'size' => 'medium', 'sortable' => FALSE),
+      );
+      return $columns;
+    }
+    break;
+  }
+}
+
+function _trackfield_field_item_dataset(&$item, $settype, $setdata) {
+  $item[$settype] = join(',', $setdata);
+  if (array_key_exists('trackdatasets', $item)) {
+    $item['trackdatasets'] .= ",$settype";
+  } else {
+    $item['trackdatasets'] = $settype;
+  }
+}
+
+function trackfield_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    case 'validate':
+      if (is_array($items)) {
+        foreach ($items as $delta => $item) {
+          if ($item['value'] != '') {
+            unset($errstr);
+            $errors = module_invoke_all('trackfield_validate', $item, $node);
+            foreach ($errors as $errstr) {
+              if ($errstr) {
+                $error_field = $field['field_name'] .']['. $delta .'][value';
+                form_set_error($error_field, 'Field ' . t($field['widget']['label']) . ': ' . $errstr);
+              }
+            }
+          }
+        }
+      }
+      break;
+    
+    case 'presave':
+      /*
+       * We have to traverse the array in this slightly odd manner
+       * as we're going to change it's contents.
+       */
+      foreach (array_keys($items) as $delta) {
+        $item = &$items[$delta];
+        $itemdata = array();
+        if ($item['value'] != '') {
+          $itemdata = module_invoke_all('trackfield_submit', $item, $node);
+          /* Set the 'is_climb' flag if there is altitude data */
+          
+          $itemdatasets = $itemdata['datasets'];
+          if (array_key_exists('altitude', $itemdatasets) &&
+            is_array($itemdatasets['altitude'])) {
+            $as = $itemdatasets['altitude'][0];
+            $ae = $itemdatasets['altitude'][count($itemdatasets['altitude']) - 1];
+            $is_climb = $ae > $as ? TRUE : FALSE;
+            $has_alt = TRUE;
+          }
+
+          /*
+           * If we are normalising data, reverse setdata as we store
+           * it here.
+           */
+
+          $reverse = FALSE;
+          switch ($field['widget']['normalise']) {
+            case TRACKFIELD_NORM_NOTHING:
+            case TRACKFIELD_NORM_FORWARD:
+              break;
+
+            case TRACKFIELD_NORM_REVERSE:
+              $reverse = TRUE;
+              $is_climb = !$is_climb;
+              break;
+
+            case TRACKFIELD_NORM_AS_CLIMB:
+              if ($has_alt && !$is_climb) {
+                $reverse = TRUE;
+                $is_climb = TRUE;
+              }
+              break;
+              
+            case TRACKFIELD_NORM_AS_DESCENT:
+              if ($has_alt && $is_climb) {
+                $reverse = TRUE;
+                $is_climb = FALSE;
+              }
+              break;
+          }
+          foreach ($itemdatasets as $settype => $setdata) {
+            if ($reverse) {
+              if (in_array($settype, array('distance', 'time'))) {
+                /* Spacial co-ords are a bit different */
+                $points = count($setdata);
+                $tmp_arr = array();
+                $max = $setdata[$points - 1];
+                for ($lp = $points - 1; $lp >= 0; $lp--) {
+                  $tmp_arr[] = $max - $setdata[$lp];
+                }
+                $item[$settype] = $tmp_arr;
+              } else {
+                $item[$settype] = array_reverse($setdata);
+              }
+            } else {
+              $item[$settype] = $setdata;
+            }
+          }
+          $item['trackdatasets'] = join(',', array_keys($itemdatasets));
+          if (array_key_exists('attributes', $itemdata) && is_array($itemdata['attributes'])) {
+            $attributes = $itemdata['attributes'];
+          }
+          $attributes['is_climb'] = $is_climb;
+          $item['attributes'] = serialize($attributes);
+
+          /*
+           * If the location module is in use...
+           * ... and number of locations per node of this type > 0...
+           * ... and this widget is configured to take location from:
+           * 
+           * If we have been given longitude/latitude (which implies
+           * distance should also be here).
+           *
+           * Then calculate which point closest to the centre of the
+           * track and save this point for later use as node location.
+           */
+
+          if (module_exists('location') &&
+            variable_get('location_maxnum_'. $node->type, 0) &&
+            $field['widget']['take_location']) {
+            if (array_key_exists('longitude', $itemdatasets) &&
+              array_key_exists('latitude', $itemdatasets)) {
+              /* Find the point nearest the centre */
+              $dsta = $itemdatasets['distance'];
+              /* TODO: make path point configurable */
+              $halfway = $dsta[count($dsta) - 1] / 2;
+              for ($lp = 0; $lp < count($dsta) && $dsta[$lp] < $halfway; $lp++) {
+                /* Do nothing - we're just looking for the middle */
+              }
+              $node->trackfield_locations[] = array(
+                'longitude' => $itemdatasets['longitude'][$lp],
+                'latitude' => $itemdatasets['latitude'][$lp]);
+            }
+          }
+        }
+      }
+      break;    
+
+    case 'update':
+      /*
+       * On update, if old_vid is set we're saving that version, so just copy
+       * datasets from the old version.
+       * Otherwise fall through and do the usual insert.
+       */
+      if ($node->old_vid) {
+        db_query("INSERT INTO {trackfield_datasets} SELECT nid, %d, field_name, delta, settype, setdata from {trackfield_datasets} WHERE nid = %d and vid = %d", $node->vid, $node->nid, $node->old_vid);
+        break;
+      }
+      /* Fall through for insert */
+    case 'insert':
+      /* Check and queue if module is on, otherwise just insert now. */
+      if (!module_exists('trackfield_queue') || !_trackfield_queue_check_queue($items, $node)) {
+        foreach ($items as $delta => $item) {
+          /*
+           * If the hooks generated some datasets, store them.
+           * Delete whatever is there first - perhaps some will have
+           * been removed.
+           */
+  
+          db_query("DELETE FROM {trackfield_datasets} WHERE nid = %d and vid = %d and field_name = '%s' and delta = %d", $node->nid, $node->vid, $field['field_name'], $delta, $settype, $item[$settype]);
+          if (array_key_exists('trackdatasets', $item)) {
+            foreach (split(',', $item['trackdatasets']) as $settype) {
+              db_query("INSERT INTO {trackfield_datasets} (nid, vid, field_name, delta, settype, setdata) VALUES (%d, %d, '%s', %d, '%s', '%s')",
+                $node->nid, $node->vid, $field['field_name'], $delta, $settype,
+                join(',', $item[$settype]));
+            }
+          }
+        }
+      }
+      break;
+  }
+}
+
+function trackfield_widget_settings($op, $widget) {
+  switch ($op) {
+    case 'form':
+      global $_trackfield_norm_types;
+      $form = array();
+      $form['normalise'] = array(
+        '#type' => 'select',
+        '#title' => t('Normalise As'),
+        '#default_value' => isset($widget['normalise']) ? $widget['normalise'] : '',
+        '#options' => $_trackfield_norm_types,
+      );
+      $form['take_location'] = array(
+        '#type' => 'select',
+        '#title' => t('Use co-ordinates from this track to overwrite node location where possible'),
+        '#default_value' => isset($widget['take_location']) ? $widget['take_location'] : '0',
+        '#options' => array('1' => 'Yes', '0' => 'No')
+      );
+      return $form;
+
+    case 'save':
+      return array('normalise', 'take_location');
+  }
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function trackfield_widget_info() {
+  return array(
+    'trackfield_text' => array(
+      'label' => 'Text Field',
+      'field types' => array('track'),
+    ),
+  );
+}
+
+function trackfield_elements() {
+  return array(
+    'trackfield_text' => array(
+      '#input' => TRUE,
+      '#columns' => array('value', 'valuetype'), '#delta' => 0,
+      '#process' => array('trackfield_text_field_process')
+    )
+  );
+}
+
+function trackfield_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $element = array(
+    '#type' => $field['widget']['type'],
+    '#default_value' => isset($items[$delta]) ? $items[$delta] : '',
+  );
+  return $element;
+}
+
+function trackfield_theme() {
+  return array(
+    'trackfield_text' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+function theme_trackfield_text($element) {
+  $fields = content_fields();
+  $field = $fields[$element['#field_name']];
+  // Group items together in fieldset.
+  $fieldset = array(
+    '#title' => $field['widget']['label'] .' '. ($element['#delta'] > 0 ? intval($element['#delta'] + 1) : ''),
+    '#value' => $element['#children'],
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => $element['#fieldset_description'],
+    '#attributes' => array(),
+  );
+  return theme('fieldset', $fieldset);
+}
+
+/**
+ * Process an individual element.
+ *
+ * Build the form element. When creating a form using FAPI #process,
+ * note that $element['#value'] is already set.
+ * The $fields array is in $form['#field_info'][$element['#field_name']].
+ */
+function trackfield_text_field_process($element, $edit, &$form_state, $form) {
+  $field_name = $element['#field_name'];
+  $field = $form['#field_info'][$field_name];
+  $value = $element['#columns'][0];
+  $valuetype = $element['#columns'][1];
+  $delta = $element['#delta'];
+
+  $element[$value] = array(
+    '#type' => 'textarea',
+    '#required' => $field['required'],
+    '#rows' => 3,
+    '#weight' => -1
+  );
+  if (isset($element['#value'][$value])) {
+    $element[$value]['#default_value'] = $element['#value'][$value];
+  }
+
+  $valuetypes = module_invoke_all('trackfield_valuetypes');
+
+  $element[$valuetype] = array(
+    '#type' => 'select',
+    '#title' => t('Treat data as'),
+    '#options' => $valuetypes,
+    '#weight' => 1
+  );
+  if (isset($element['#value'][$valuetype])) {
+    $element[$valuetype]['#default_value'] = $element['#value'][$valuetype];
+  }
+  $form_state['#field_info'][$field['field_name']] = $field;
+  return $element;
+}
+
+
+function trackfield_field_formatter_info() {
+  $formatters = array(
+    'default' => array('label' => 'unformatted',  'field types' => array('track'))
+  );
+  return $formatters;
+}
+
+function trackfield_field_formatter($field, $item, $formatter, $node) {
+  /* If the value is empty, we have $item['value'] = NULL */
+  if (is_null($item['value'])) {
+    return '';
+  }
+  
+  /* We only know how to dump it as 'raw' right now. */
+  if ($formatter == 'default') {
+    return check_plain($item['value']);
+  }
+
+  /* This should never happen */
+  return '';
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ */
+function trackfield_content_is_empty($item, $field) {
+  if (empty($item['value']) && (string)$item['value'] !== '0') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/*
+ * Function to return list of field names in the current system
+ * that are of trackfield type.
+ */
+
+function _trackfield_fields() {
+  /* Cache the list in this static var */
+  static $field_list;
+  if (is_array($field_list)) { return $field_list; }
+
+  $field_list = array();
+  $sql = <<<EOF
+SELECT DISTINCT nfi.field_name
+FROM {content_node_field} nf, {content_node_field_instance} nfi
+WHERE nf.type = 'track'
+AND nfi.field_name = nf.field_name
+ORDER BY nfi.field_name
+EOF;
+
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $field_list[] = $row->field_name;
+  }
+  return $field_list;
+}
+ 
+/*
+ * Functions to work out distance between lat/lon pairs.
+ * Figure this is useful to have in here as many other related
+ * modules will want to do this.
+ * 
+ * The two functions for this purpose were taken from a perl version
+ * originally at http://www.indo.com/distance/dist.pl
+ * 
+ * From the original file:
+ * 
+ * This code was written in 1998 by Darrell Kindred <dkindred@cmu.edu>.
+ * I have released it into the public domain.  Do what you like with it,
+ * but if you make any modifications, please either list your name and
+ * describe the changes here, or remove my name and address above.
+ *
+ * This code is distributed without any warranty, express or implied. 
+ * 
+ * Calculate the great-circle distance and initial heading from one point on
+ * the Earth to another, given latitude & longitude.
+ * 
+ * Calculations assume a spherical Earth with radius 6367 km.  
+ * (I think this should cause no more than 0.2% error.)
+ */
+
+function _trackfield_degrees_to_radians($deg) {
+    return($deg * M_PI / 180.0);
+}
+
+function _trackfield_great_circle_distance($lat1, $lon1, $lat2, $lon2) {
+  $lat1 = _trackfield_degrees_to_radians($lat1);
+  $lon1 = _trackfield_degrees_to_radians($lon1);
+  $lat2 = _trackfield_degrees_to_radians($lat2);
+  $lon2 = _trackfield_degrees_to_radians($lon2);
+  
+  /*
+   * Approx radius of Earth in meters.  True radius varies from
+   * 6357km (polar) to 6378km (equatorial).
+   */
+  $earth_radius = 6367;
+
+  $dlon = $lon2 - $lon1;
+  $dlat = $lat2 - $lat1;
+  $a = pow((sin($dlat / 2)), 2)
+      + cos($lat1) * cos($lat2) * pow(sin($dlon / 2), 2);
+  $d = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+  # This is a simpler formula, but it's subject to rounding errors
+  # for small distances.  See http://www.census.gov/cgi-bin/geo/gisfaq?Q5.1
+  # my $d = &acos(sin($lat1) * sin($lat2)
+  #               + cos($lat1) * cos($lat2) * cos($long1-$long2));
+
+  return($earth_radius * $d * 1000);
+}
+
+/*
+ * Admin functions.
+ */
+
+function _trackfield_admin_units() {
+  $form = array();
+  $form[] = array(
+    '#type' => 'markup',
+    '#value' => t('These settings are for future use. And <strong>do not actually do anything!</strong>')
+  );
+  $form['trackfield_distance_units'] = array(
+    '#type' => 'select',
+    '#title' => t('Distance Units'),
+    '#default_value' => variable_get('trackfield_distance_units', 'metric'),
+    '#options' => array(
+      'metric' => t('Metric (Km/m)'),
+      'statute' => t('Statute (Mile/ft)'),
+    )
+  );
+  $form['trackfield_altitude_units'] = array(
+    '#type' => 'select',
+    '#title' => t('Altitude Units'),
+    '#default_value' => variable_get('trackfield_altitude_units', 'metric'),
+    '#options' => array(
+      'metric' => t('Metric (m)'),
+      'imperial' => t('Imperial (ft)'),
+    )
+  );
+  $form['trackfield_user_units'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow user to override site settings.'),
+    '#default_value' => variable_get('trackfield_user_units', 0)
+  );
+  return system_settings_form($form);
+}
+
+?>

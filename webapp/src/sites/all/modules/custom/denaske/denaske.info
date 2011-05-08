@@ -1,0 +1,7 @@
+; $Id$
+name = Denaske
+description = Módulo general denaske
+dependencies[] = gmap
+package = denaske
+core = 6.x
+

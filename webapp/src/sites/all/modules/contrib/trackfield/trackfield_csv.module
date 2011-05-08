@@ -1,0 +1,211 @@
+<?php
+
+/*
+ * Types of input we understand.
+ */
+
+DEFINE('DATASET_LATLON', 'latlon');
+DEFINE('DATASET_LATLONALT', 'latlonalt');
+DEFINE('DATASET_LONLATALT', 'lonlatalt');
+DEFINE('DATASET_DSTALT', 'dstalt');
+
+function trackfield_csv_trackfield_valuetypes() {
+  return array(
+    DATASET_LATLON => t('Lat,Lon,Usr...'),
+    DATASET_LATLONALT => t('Lat,Lon,Alt,Usr...'),
+    DATASET_LONLATALT => t('Lon,Lat,Alt,Usr...'),
+    DATASET_DSTALT => t('Dst,Alt,Usr...')
+  );
+}
+
+function _trackfield_csv_split($input) {
+  return preg_split('/\s/', $input, -1, PREG_SPLIT_NO_EMPTY);
+}
+
+function _trackfield_csv_add_usr($parts, &$ausr) {
+  $lp = 0;
+  while (count($parts)) {
+    $ausr[$lp++][] = array_shift($parts);
+  }
+}
+
+function trackfield_csv_trackfield_validate($item, $node) {
+  /*
+   * Forget it if we don't know about this valuetype.
+   */
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_csv_trackfield_valuetypes())) { return; }
+ 
+  /*
+   * Queue this request if the size is larger than threshold.
+   */
+  if (module_exists('trackfield_queue') && _trackfield_queue_should_queue(strlen($item['value']), $node)) return FALSE;
+
+  switch($valuetype) {
+    case DATASET_LATLON:
+    case DATASET_DSTALT:
+      $req_count = 2;
+      break;
+    case DATASET_LATLONALT:
+    case DATASET_LONLATALT:
+      $req_count = 3;
+      break;
+  }
+
+  /* Validate lists */
+  $lp = 0;
+  unset($lx);
+  foreach (_trackfield_csv_split($item['value']) as $pair) {
+    $values = split(',', $pair);
+    if (isset($value_count)) {
+      if (count($values) != $value_count) {
+        return t('Data points must be in consistent set.');
+      }
+    } else {
+      $value_count = count($values);
+      if ($value_count < $req_count) {
+        return t('Data does not contain enough values.');
+      }
+    }
+        
+/* Check values */
+
+    switch($valuetype) {
+      case DATASET_LATLON:
+      case DATASET_LATLONALT:
+        if ($values[0] > 90 || $values[0] < -90 || $values[1] > 180 || $values[1] < -180) {
+          return t('Data contains invalid GPS lat/lon point.');
+          
+        }
+        break;
+      case DATASET_LONLATALT:
+        if ($values[1] > 90 || $values[1] < -90 || $values[0] > 180 || $values[0] < -180) {
+          return t('Data contains invalid GPS lat/lon point.');
+          
+        }
+        break;
+      case DATASET_DSTALT:
+        if (isset($lx)) {
+          if ($values[0] < $lx) {
+            return t('Data must be in ascending sequence.');
+          }
+        } else {
+          if ($values[0] != 0) {
+            return t('First point must have zero DST.');
+          }
+        }
+        $lx = $values[0];
+        break;
+    }
+    $lp++;
+  }
+  if ($lp < 2) {
+    return t('At least two data points must be given.');
+  }
+  return FALSE;
+}
+
+function trackfield_csv_trackfield_submit($item, $node) {
+  /*
+   * Forget it if we don't know about this valuetype.
+   */
+  
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_csv_trackfield_valuetypes())) { return; }
+
+  /*
+   * Queue this request if the size is larger than threshold.
+   */
+  if (module_exists('trackfield_queue') && _trackfield_queue_should_queue(strlen($item['value']), $node)) {
+    return array('attributes' => array('should_queue' => 1));
+  }
+
+  $alat = array();
+  $alon = array();
+  $adst = array();
+  $aalt = array();
+  $ausr = array(array());
+  
+  /*
+   * Flag to save altitude data as we only bother to do this if
+   * there's more than one particular altitude given.
+   * ie. if they are all zero don't bother.
+   */ 
+  $save_alt = FALSE;
+
+  /* Load values we have been given */
+  if ($valuetype == DATASET_LATLON) {
+    foreach (_trackfield_csv_split($item['value']) as $pair) {
+      $parts = split(',', $pair);
+      $alat[] = array_shift($parts);
+      $alon[] = array_shift($parts);
+      _trackfield_csv_add_usr($parts, $ausr);
+    }
+  } else if ($valuetype == DATASET_LATLONALT) {
+    foreach (_trackfield_csv_split($item['value']) as $triple) {
+      $parts = split(',', $triple);
+      $alat[] = array_shift($parts);
+      $alon[] = array_shift($parts);
+      if (($aalt[] = array_shift($parts)) != $aalt[0] && !$save_alt) { $save_alt = TRUE; }
+      _trackfield_csv_add_usr($parts, $ausr);
+    }
+  } else if ($valuetype == DATASET_LONLATALT) {
+    foreach (_trackfield_csv_split($item['value']) as $triple) {
+      $parts = split(',', $triple);
+      $alon[] = array_shift($parts);
+      $alat[] = array_shift($parts);
+      if (($aalt[] = array_shift($parts)) != $aalt[0] && !$save_alt) { $save_alt = TRUE; }
+      _trackfield_csv_add_usr($parts, $ausr);
+    }
+  } else if ($valuetype == DATASET_DSTALT) {
+    foreach (_trackfield_csv_split($item['value']) as $pair) {
+      $parts = split(',', $pair);
+      $adst[] = array_shift($parts);
+      if (($aalt[] = array_shift($parts)) != $aalt[0] && !$save_alt) { $save_alt = TRUE; }
+      _trackfield_csv_add_usr($parts, $ausr);
+    }
+  }
+
+  /* Calculate distances if they gave lat/lon but not distance */
+  if (count($adst) == 0 && count($alat) > 1) {
+    $adst[0] = 0;
+    for ($lp = 1; $lp < count($alat); $lp++) {
+      $adst[$lp] = $adst[$lp - 1] + _trackfield_great_circle_distance($alat[$lp - 1], $alon[$lp - 1], $alat[$lp], $alon[$lp]);
+    }
+  }
+
+  /*
+   * Save what we have in our output array.
+   */
+  $out = array();
+  if (count($alat) > 0) { $out['latitude'] = $alat; }
+  if (count($alon) > 0) { $out['longitude'] = $alon; }
+  if (count($adst) > 0) { $out['distance'] = $adst; }
+  if (count($aalt) > 0 && $save_alt) { $out['altitude'] = $aalt; }
+  /*
+   * TODO: this should all be configurable.
+   * Order is hardcoded for now as:
+   * - Seconds
+   * - Heartrate
+   * - Cadence
+   */
+  if (count($ausr[0]) > 0) { $out['seconds'] = $ausr[0]; }
+  if (count($ausr[1]) > 0) { $out['heartrate'] = $ausr[1]; }
+  if (count($ausr[2]) > 0) { $out['cadence'] = $ausr[2]; }
+  
+  /* Calculate speed if time and distance are there. */
+  if (array_key_exists('seconds', $out) && array_key_exists('distance', $out)) {
+    /* Starting speed is always zero */
+    $out['speed'][] = 0;
+    for ($lp = 1; $lp < count($out['seconds']); $lp++) {
+      $out['speed'][] =
+        ($out['distance'][$lp] - $out['distance'][$lp - 1]) / 
+        ($out['seconds'][$lp] - $out['seconds'][$lp - 1]) /
+        (3600 / 1000) /* to get Km/h from m/s */;
+    }
+  }
+
+  return array('datasets' => $out);
+}
+
+?>

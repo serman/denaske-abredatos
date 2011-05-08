@@ -1,0 +1,523 @@
+<?php
+
+define('SERVICECONNECT_TWITTER_PATH_LOGIN', 'login-via-twitter');
+define('SERVICECONNECT_TWITTER_PATH_LINK', 'link-twitter-profile');
+define('SERVICECONNECT_TWITTER_PATH_ADMIN', 'admin/settings/serviceconnect/twitter');
+define('SERVICECONNECT_TWITTER_PATH_ADMIN_SETTINGS', 'admin/settings/serviceconnect/twitter/settings');
+define('SERVICECONNECT_TWITTER_PATH_ADMIN_TEST', 'admin/settings/serviceconnect/twitter/test');
+
+define('SERVICECONNECT_TWITTER_PERM_LOGIN', 'login via twitter');
+define('SERVICECONNECT_TWITTER_PERM_LINK', 'link twitter profile');
+
+define('SERVICECONNECT_TWITTER_VAR_CONSUMER_KEY', 'serviceconnect_twitter_consumer_key');
+define('SERVICECONNECT_TWITTER_VAR_CONSUMER_SECRET', 'serviceconnect_twitter_consumer_secret');
+define('SERVICECONNECT_TWITTER_VAR_CONSUMER_SECRET', 'serviceconnect_twitter_consumer_secret');
+
+// OAuth specifies 3 different URL's for the authorisation process, which may be different
+// see http://oauth.net/core/1.0a/#request_urls
+define('SERVICECONNECT_TWITTER_VAR_REQUEST_TOKEN_URL', 'serviceconnect_twitter_request_token_url');
+define('SERVICECONNECT_TWITTER_VAR_USER_AUTHORIZATION_URL', 'serviceconnect_twitter_user_authorization_url');
+define('SERVICECONNECT_TWITTER_VAR_ACCESS_TOKEN_URL', 'serviceconnect_twitter_access_token_url');
+define('SERVICECONNECT_TWITTER_VAR_REQUEST_TOKEN_URL_DEFAULT', 'https://api.twitter.com/oauth/request_token');
+define('SERVICECONNECT_TWITTER_VAR_USER_AUTHORIZATION_URL_DEFAULT', 'https://api.twitter.com/oauth/authorize');
+define('SERVICECONNECT_TWITTER_VAR_ACCESS_TOKEN_URL_DEFAULT', 'https://api.twitter.com/oauth/access_token');
+
+define('SERVICECONNECT_TWITTER_VAR_TERMS', 'serviceconnect_twitter_terms');
+
+define('SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_SIZE', 'serviceconnect_twitter_profilepicture_size');
+define('SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_SIZE_DEFAULT', 'bigger');
+define('SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_PROFILE_FIELD', 'serviceconnect_twitter_profilepicture_profile_field');
+define('SERVICECONNECT_TWITTER_VAR_LINK_PROFILE_FIELD', 'serviceconnect_twitter_link_profile_field');
+define('SERVICECONNECT_TWITTER_VAR_NAME_PROFILE_FIELD', 'serviceconnect_twitter_name_profile_field');
+define('SERVICECONNECT_TWITTER_VAR_LOCATION_PROFILE_FIELD', 'serviceconnect_twitter_location_profile_field');
+define('SERVICECONNECT_TWITTER_VAR_DESCRIPTION_PROFILE_FIELD', 'serviceconnect_twitter_description_profile_field');
+define('SERVICECONNECT_TWITTER_VAR_WEBSITE_PROFILE_FIELD', 'serviceconnect_twitter_website_profile_field');
+
+define('SERVICECONNECT_TWITTER_VAR_FRIENDS_RELATIONSHIP_TYPE', 'serviceconnect_twitter_friends_relationship_type');
+
+/**
+ * Used as servicename for serviceconnect
+ *
+ * @see _serviceconnect_twitter_page_oauth_callback()
+ * @see serviceconnect_login_with_new_user()
+ * @see serviceconnect_link_service()
+ */
+define('SERVICECONNECT_TWITTER_SERVICE_NAME', 'twitter');
+
+/**
+ * Implementation of hook_perm().
+ */
+function serviceconnect_twitter_perm() {
+  return array(
+    SERVICECONNECT_TWITTER_PERM_LOGIN,
+    SERVICECONNECT_TWITTER_PERM_LINK,
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function serviceconnect_twitter_menu() {
+  $menu = array();
+  
+  $menu[SERVICECONNECT_TWITTER_PATH_LOGIN] = array(
+    'page callback' => 'serviceconnect_twitter_page_login',
+    'access arguments' => array(SERVICECONNECT_TWITTER_PERM_LOGIN),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $menu[SERVICECONNECT_TWITTER_PATH_LINK] = array(
+    'page callback' => 'serviceconnect_twitter_page_login',
+    'page arguments' => array(TRUE),
+    'access arguments' => array(SERVICECONNECT_TWITTER_PERM_LINK),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $menu[SERVICECONNECT_TWITTER_PATH_ADMIN] = array(
+    'title' => 'Twitter',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_twitter_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'serviceconnect_twitter.admin.inc',
+  );
+  
+  $menu[SERVICECONNECT_TWITTER_PATH_ADMIN_SETTINGS] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_twitter_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'serviceconnect_twitter.admin.inc',
+  );
+  
+  $menu[SERVICECONNECT_TWITTER_PATH_ADMIN_TEST] = array(
+    'title' => 'Test connection',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_twitter_admin_test_page'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'serviceconnect_twitter.admin.inc',
+  );
+  
+  return $menu;
+}
+
+function serviceconnect_twitter_page_login($link_twitter_to_user = FALSE) {
+  if (!empty($_GET['sid']) && !empty($_GET['h']) && _serviceconnect_twitter_secret_hash($_GET['sid']) == $_GET['h']){
+    $sql = 'SELECT token FROM {serviceconnect_twitter_auth_session} WHERE sid = %d';
+    $res = db_query($sql, $_GET['sid']);
+    return _serviceconnect_twitter_page_oauth_callback(db_result($res), 2);
+  } elseif (!empty($_GET['oauth_token'])) {
+    return _serviceconnect_twitter_page_oauth_callback($_GET['oauth_token']);
+  } else {
+    return _serviceconnect_twitter_page_new($link_twitter_to_user);
+  }
+}
+
+function _serviceconnect_twitter_page_oauth_callback($token, $phase = 1, $username = NULL, $email = NULL) {
+  global $user;
+  
+  try {
+    $sql = 'SELECT s.sid, s.uid, s.link, s.token, s.token_secret, s.created, s.service_uid
+    FROM {serviceconnect_twitter_auth_session} s
+    WHERE s.token = \'%s\'';
+    $res = db_query($sql, $token);
+    if (!$session = db_fetch_object($res)) {
+      throw new Exception('Session id not found');
+    }
+    $token_secret = $session->token_secret;
+    $service_user_id = $session->service_uid;
+    
+    if ($session->uid != (int) $user->uid) {
+      // This is to prevent session fixation attack using to following flow:
+      // 1) Alice clicks on login with Twitter, does not nothing on the Twitter page but
+      //    redirects Bob to the URI
+      // 2) Bob goes to that URI and grants permission with his Twitter account
+      // 3) Alice requests access token and is now authorized with Bob's Twitter
+      // This does not fix the problem if both Alice and Bob are not logged in on Drupal,
+      // see http://oauth.net/advisories/2009-1/ for details
+      throw new Exception('Authorisation session was initiated by another user');
+    }
+    
+    try {
+      if ($phase == 1) {
+        // Request access token (note that $session->token is the _authorisation_ token)
+        module_load_include('inc', 'serviceconnect_twitter', 'calls/oauth.access_token');
+        $response = serviceconnect_twitter_call_oauth_access_token($session->token, $session->token_secret);
+        extract($response); // Introduces $token, $token_secret and $service_user_id
+        $sql = 'UPDATE {serviceconnect_twitter_auth_session}
+        SET token = \'%s\', token_secret = \'%s\', service_uid = \'%s\'
+        WHERE sid = %d';
+        db_query($sql, $token, $token_secret, $service_user_id, $session->sid);
+        // Delete old sessions with the same token (this happens when the user still has a valid token)
+        $sql = 'DELETE FROM {serviceconnect_twitter_auth_session} WHERE token = \'%s\' AND sid != %d';
+        db_query($sql, $token, $session->sid);
+      }
+      
+      // Request user profile information
+      module_load_include('inc', 'serviceconnect_twitter', 'calls/users.show');
+      $profile = serviceconnect_twitter_call_users_show($service_user_id, $token, $token_secret);
+      $profile['service_profile_url'] = 'http://twitter.com/' . $profile['screen_name'];
+    } catch (Exception $e){
+      drupal_set_message(t('Login with Twitter failed. You probably rejected permission.'), 'error');
+      watchdog('ServiceConnect', $e->getMessage().' (probably rejected permission)', array(), WATCHDOG_ALERT);
+      drupal_goto('');
+      return '';
+    }
+    
+    $first_use = FALSE;
+    $scprofile = serviceconnect_get_uid_by_service_uid(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id);
+    
+    // Generate username / email form (only when not linking profile to current user).
+    if (!$session->link || !user_is_logged_in()) {
+      // Not a registered user yet (or unlinked)
+      if (!$scprofile && $phase == 1) {
+        $h = _serviceconnect_twitter_secret_hash($session->sid);
+        drupal_goto($_GET['q'], "sid={$session->sid}&h=$h");
+        return '';
+      }
+      elseif (!$scprofile && $phase == 2) {
+        return drupal_get_form(
+          'serviceconnect_register_form',
+          'serviceconnect_twitter',
+          $token,
+          $profile['name'],
+          variable_get(SERVICECONNECT_TWITTER_VAR_TERMS, ''),
+          SERVICECONNECT_TWITTER_SERVICE_NAME
+        );
+      }
+    }
+
+    // Log the user in.
+    $expire_date = 2147483647;
+    if (user_is_logged_in()) {
+      if ($session->link) {
+        if ($scprofile->uid) {
+          if ($scprofile->uid != $user->uid) {
+            // The Twitter account already has another Drupal account linked (called $service_uid),
+            // The user already has an account which he uses, the flow to get here is:
+            // 1) Login via Twitter (without migrating) -> generates a new account
+            // 2) Try to link old account with their Twitter account
+            drupal_set_message(t('Unable to link Twitter account to your user, this Twitter account is already in use for another account'), 'error');
+          } else {
+            // User is already migrated, stay logged in with $user->uid,
+            // however, call this function to update statistics
+            serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+            drupal_set_message(t('Succesfully logged in with Twitter'));
+          }
+        } else {
+          // This is the usual migration, no Twitter account is linked to the Drupal account yet
+          $scpid = serviceconnect_link_service(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id,
+            $profile['service_profile_url'], $profile['name'], $expire_date);
+          drupal_set_message(t('Your Twitter profile is now linked to your account'));
+          $first_use = TRUE;
+        }
+      } else {
+        if ($scprofile->uid) {
+          serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+          drupal_set_message(t('Succesfully logged in with Twitter'));
+        } else {
+          // We are already logged in, but want to login with another account via Twitter
+          $uid = serviceconnect_login_with_new_user(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id, $username, $email);
+          $scpid = serviceconnect_link_service(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id,
+            $profile['service_profile_url'], $profile['name'], $expire_date);
+          drupal_set_message(t('Succesfully logged in with Twitter'));
+          $first_use = TRUE;
+        }
+      }
+    } else {
+      if ($scprofile->uid) {
+        serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+        drupal_set_message(t('Succesfully logged in with Twitter'));
+      } else {
+        $uid = serviceconnect_login_with_new_user(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id, $username, $email);
+        $scpid = serviceconnect_link_service(SERVICECONNECT_TWITTER_SERVICE_NAME, $service_user_id,
+          $profile['service_profile_url'], $profile['name'], $expire_date);
+        drupal_set_message(t('Succesfully logged in with Twitter'));
+        $first_use = TRUE;
+      }
+    }
+    
+    if (empty($scpid)) {
+      $scpid = $scprofile->scpid;
+    }
+
+    // Save record in serviceconnect_user_twitter
+    $sql = 'SELECT sut.profile_image_url, sut.friendscount
+    FROM {serviceconnect_user_twitter} sut
+    WHERE sut.scpid = %d';
+    $res = db_query($sql, $scpid);
+    if ($rec = db_fetch_array($res)) {
+      $old_profile_image_url = $rec['profile_image_url'];
+      $old_friendscount = $rec['friendscount'];
+      $sql = 'UPDATE {serviceconnect_user_twitter} SET
+      token = \'%s\',
+      token_secret = \'%s\',
+      name = \'%s\',
+      profile_image_url = \'%s\',
+      friendscount = %d
+      WHERE scpid = %d';
+      db_query($sql, $token, $token_secret, $profile['name'], $profile['profile_image_url'], $profile['friendscount'], $scpid);
+    } else {
+      $old_profile_image_url = '';
+      $old_friendscount = 0;
+
+      $sut = new stdClass();
+      $sut->scpid = $scpid;
+      $sut->token = $token;
+      $sut->token_secret = $token_secret;
+      $sut->name = $profile['name'];
+      $sut->profile_image_url = $profile['profile_image_url'];
+      $sut->friendscount = $profile['friendscount'];
+      drupal_write_record('serviceconnect_user_twitter', $sut);
+    }
+  } catch (Exception $e){
+    global $_serviceconnect_twitter_last_response;
+    if ($_serviceconnect_twitter_last_response->code == 502) {
+      drupal_set_message(t('Unable to login with Twitter. Twitter seems to be over capacity at the moment.'), 'error');
+    } else {
+      drupal_set_message(t('Unable to login with Twitter'), 'error');
+    }
+    watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_ALERT);
+    drupal_goto('');
+    return '';
+  }
+  
+  // We are now logged in, import profile information from Twitter
+  try {
+    // Import information into profile fields
+    $profile_fields = array(
+      SERVICECONNECT_TWITTER_VAR_NAME_PROFILE_FIELD => $profile['name'],
+      SERVICECONNECT_TWITTER_VAR_DESCRIPTION_PROFILE_FIELD => $profile['description'],
+      SERVICECONNECT_TWITTER_VAR_LOCATION_PROFILE_FIELD => $profile['location'],
+      SERVICECONNECT_TWITTER_VAR_WEBSITE_PROFILE_FIELD => $profile['website'],
+      SERVICECONNECT_TWITTER_VAR_LINK_PROFILE_FIELD => $profile['service_profile_url'],
+    );
+
+    // Download profilepicture
+    if ($old_profile_image_url != $profile['profile_image_url']) {
+      if (isset($profile['profile_image_url'])) {
+        $profile_picture_size = variable_get(SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_SIZE, SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_SIZE_DEFAULT);
+        if ($profile_picture_size == 'bigger') {
+          $profile['profile_image_url'] = str_replace('_normal.jpg', '_bigger.jpg', $profile['profile_image_url']);
+        }
+        $profile_fields[SERVICECONNECT_TWITTER_VAR_PROFILEPICTURE_PROFILE_FIELD] = $profile['profile_image_url'];
+      }
+    }
+
+    $fields = array();
+    foreach ($profile_fields as $var => $value) {
+      if ($field = variable_get($var, '')) {
+        $fields[$field] = $value;
+      }
+    }
+    serviceconnect_save_profile($fields);
+
+    $redirect = '';
+    if ($first_use && !$session->link){
+      $redirect = serviceconnect_first_use(t(SERVICECONNECT_TWITTER_SERVICE_NAME));
+    }
+    $redirect or $redirect = 'user';
+    drupal_goto($redirect);
+    return '';
+  } catch (Exception $e){
+    drupal_set_message(t('Unable to import profile information from Twitter'), 'error');
+    watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_ALERT);
+    drupal_goto('');
+    return '';
+  }
+}
+
+function _serviceconnect_twitter_page_new($link_twitter_to_user = FALSE){
+  global $user;
+  
+  try {
+    if ($link_twitter_to_user) {
+      $callback = url(SERVICECONNECT_TWITTER_PATH_LINK, array('absolute' => TRUE));
+    }
+    else {
+      $callback = url(SERVICECONNECT_TWITTER_PATH_LOGIN, array('absolute' => TRUE));
+    }
+
+    module_load_include('inc', 'serviceconnect_twitter', 'calls/oauth.request_token');
+    $values = serviceconnect_twitter_call_oauth_request_token($callback);
+
+    // Write session to database
+    $session = new stdClass();
+    $session->uid = (int) $user->uid;
+    $session->link = $link_twitter_to_user ? 1 : 0;
+    $session->token = $values['oauth_token'];
+    $session->token_secret = $values['oauth_token_secret'];
+    $session->created = time();
+    if (!drupal_write_record('serviceconnect_twitter_auth_session', $session)) {
+      throw new Exception('Error writing session information while trying to login via Twitter');
+    }
+    
+    // Redirect to the Twitter authorisation page
+    $query = 'oauth_token='.urlencode($session->token);
+    $url = variable_get(SERVICECONNECT_TWITTER_VAR_USER_AUTHORIZATION_URL, SERVICECONNECT_TWITTER_VAR_USER_AUTHORIZATION_URL_DEFAULT);
+    drupal_goto($url, $query);
+  } catch (Exception $e){
+    drupal_set_message(t('Unable to login with Twitter'), 'error');
+    watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_ALERT);
+    drupal_goto('');
+    return '';
+  }
+}
+
+function _serviceconnect_twitter_values_from_xml($document){
+  $root = $document->documentElement;
+  if (!$root->hasChildNodes()) {
+    drupal_set_message(t('Invalid response from Twitter'), 'error');
+    return;
+  }
+  
+  $values = array();
+  $node = $root->firstChild;
+  do {
+    if ($node->nodeName == 'info') {
+      if (!$node->hasChildNodes()) {
+        continue;
+      }
+      $info_node = $node->firstChild;
+      do {
+        $values[$info_node->nodeName] = $info_node->textContent;
+      } while ($info_node = $info_node->nextSibling);
+    } else {
+      $values[$node->nodeName] = $node->textContent;
+    }
+  } while ($node = $node->nextSibling);
+  
+  return $values;
+}
+
+function _serviceconnect_twitter_request($params, $url, $method = 'POST', $token = '', $token_secret = '') {
+  module_load_include('php', 'serviceconnect', 'oauth.lib');
+  
+  // We use this for the test connection page
+  global $_serviceconnect_twitter_last_response;
+  $_serviceconnect_twitter_last_response = NULL;
+  
+  $key = variable_get(SERVICECONNECT_TWITTER_VAR_CONSUMER_KEY, '');
+  $secret = variable_get(SERVICECONNECT_TWITTER_VAR_CONSUMER_SECRET, '');
+  
+  try {
+    $consumer = new OAuthConsumer($key, $secret);
+    $token = new OAuthToken($token, $token_secret);
+
+    $query = '';
+    // Move the params to the URL query if method is GET
+    if ($method == 'GET') {
+      $url .= '?' . http_build_query($params);
+      $params = array();
+    }
+
+    $params['oauth_consumer_key'] = $key;
+    $params['oauth_signature_method'] = 'HMAC-SHA1';
+    $params['oauth_version'] = '1.0';
+    $request = OAuthRequest::from_consumer_and_token($consumer, $token, $method, $url, $params);
+    
+    $signature_method = new OAuthSignatureMethod_HMAC_SHA1();
+    $request->sign_request($signature_method, $consumer, $token);
+    
+    $headers = array();
+    $header = explode('Authorization: ', $request->to_header(), 2);
+    $headers['Authorization'] = $header[1];
+    //$headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    //$query = $request->to_postdata();
+    $response = drupal_http_request($url, $headers, $method);
+    $_serviceconnect_twitter_last_response = $response;
+    if ($response->code != 200){
+      return FALSE;
+    }
+    
+    return $response->data;
+  } catch (OAuthException $e){
+    // Display the detailed error only for users with administer serviceconnect permission
+    if (user_access(SERVICECONNECT_PERM_ADMINISTER)) {
+      drupal_set_message($e->getMessage(), 'error');
+    }
+    return FALSE;
+  }
+}
+
+function serviceconnect_twitter_get_active_token() {
+  global $user;
+  if (!$scpid = serviceconnect_get_scpid_by_service(SERVICECONNECT_TWITTER_SERVICE_NAME)) {
+    return FALSE;
+  }
+  $sql = 'SELECT suh.token, suh.token_secret
+  FROM {serviceconnect_user_twitter} suh
+  WHERE suh.scpid = %d';
+  $res = db_query($sql, $scpid);
+  return db_fetch_array($res);
+}
+
+function serviceconnect_twitter_cron() {
+  $sql = 'DELETE FROM {serviceconnect_twitter_auth_session} WHERE created < %d';
+  db_query($sql, time() - (3600 * 6));
+}
+
+function _serviceconnect_twitter_secret_hash($data) {
+  $secret = drupal_get_private_key();
+  return substr(md5($data.$secret), 0, 16);
+}
+
+function serviceconnect_twitter_theme($existing, $type, $theme, $path) {
+  return array(
+    'serviceconnect_twitter_terms_page' => array(
+      'template' => 'serviceconnect_twitter_terms_page',
+      'arguments' => array(
+        'accept_path' => NULL,
+        'accept_path_query' => NULL,
+        'decline_path' => NULL,
+        'decline_path_query' => NULL,
+        'terms' => NULL,
+        'profile' => NULL,
+      ),
+    ),
+  );
+}
+
+function serviceconnect_twitter_register_page($sid, $profile, $scpid = NULL) {
+  $accept_path = SERVICECONNECT_TWITTER_PATH_LOGIN;
+  $accept_path_query = 'sid='.$sid.'&h='._serviceconnect_twitter_secret_hash($sid);
+  $decline_path = SERVICECONNECT_TWITTER_PATH_DECLINE;
+  if ($scpid) {
+    $decline_path_query = 'scpid='.$scpid.'&h='._serviceconnect_twitter_secret_hash($scpid);
+  } else {
+    $decline_path_query = '';
+  }
+  return theme(
+    'serviceconnect_twitter_terms_page',
+    $accept_path,
+    $accept_path_query,
+    $decline_path,
+    $decline_path_query,
+    variable_get(SERVICECONNECT_TWITTER_VAR_TERMS, ''),
+    $profile
+  );
+}
+
+function serviceconnect_twitter_page_decline() {
+  serviceconnect_increment_counter('twitter terms declined');
+  if (isset($_GET['scpid'])) {
+    $scpid = $_GET['scpid'];
+    if ($_GET['h'] == _serviceconnect_twitter_secret_hash($scpid)) {
+      serviceconnect_clear_user_data($scpid);
+      $sql = 'DELETE FROM {serviceconnect_user_twitter} WHERE scpid = %d';
+      db_query($sql, $scpid);
+    }
+  }
+  drupal_goto('user');
+}
+
+/**
+ * Register callback for serviceconnect module
+ *
+ * @see serviceconnect_register_form_submit()
+ */
+function serviceconnect_twitter_register($token, $username, $email) {
+  _serviceconnect_twitter_page_oauth_callback($token, 3, $username, $email);
+}

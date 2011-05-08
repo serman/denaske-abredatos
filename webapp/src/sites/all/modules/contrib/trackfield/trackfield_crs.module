@@ -1,0 +1,76 @@
+<?php
+
+/*
+ * Types of input we understand.
+ */
+
+DEFINE('DATASET_CRS', 'crs');
+
+function trackfield_crs_trackfield_valuetypes() {
+  return array(
+    DATASET_CRS => t('CRS'),
+  );
+}
+
+function _trackfield_crs_setcsv(&$item) {
+  $new_value = FALSE;
+  $doc = new DomDocument;
+  if ($doc->loadXML($item['value'])) {
+    $course = $doc->getElementsByTagName('Course');
+    if ($course->length) {
+      $pointname = 'Trackpoint';
+      $point_list = $course->item(0)->getElementsByTagName($pointname);
+      $point = $point_list->item(0);
+      while ($point) {
+        $lat = trim($point->getElementsByTagName('LatitudeDegrees')->item(0)->nodeValue);
+        $lon = trim($point->getElementsByTagName('LongitudeDegrees')->item(0)->nodeValue);
+        /* Only add point if lat/lon given */
+        if (is_numeric($lat) && is_numeric($lon)) {
+          $alt = trim($point->getElementsByTagName('AltitudeMeters')->item(0)->nodeValue);
+          $hrt = trim($point->getElementsByTagName('HeartRateBpm')->item(0)->nodeValue);
+          $cad = trim($point->getElementsByTagName('Cadence')->item(0)->nodeValue);
+
+          /* Convert time into number of seconds since start */
+          $tim = trim($point->getElementsByTagName('Time')->item(0)->nodeValue);
+          if ($tim) {
+            $tim = strtotime($tim);
+            if (!isset($csv)) { $tim_base = $tim; }
+            $tim = $tim - $tim_base;
+          }
+
+          if (isset($csv)) { $csv .= ' '; }
+          $csv .= "$lon,$lat,$alt,$tim,$hrt,$cad";
+        }
+
+        /* Move to next point of interest in the list */
+        do {
+          $point = $point->nextSibling;
+        } while ($point && $point->nodeName != $pointname);
+      }
+      $new_value = $csv;
+      $item['valuetype'] = DATASET_LONLATALT;
+    }
+  }
+  $item['value'] = $new_value;
+}
+
+function trackfield_crs_trackfield_validate($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_crs_trackfield_valuetypes())) { return; }
+
+  _trackfield_crs_setcsv($item);
+  if (!$item['value']) {
+    return t('Invalid crs or no paths found in crs.');
+  }
+  return trackfield_csv_trackfield_validate($item, $node);
+}
+
+function trackfield_crs_trackfield_submit($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_crs_trackfield_valuetypes())) { return; }
+
+  _trackfield_crs_setcsv($item);
+  return trackfield_csv_trackfield_submit($item, $node);
+}
+
+?>

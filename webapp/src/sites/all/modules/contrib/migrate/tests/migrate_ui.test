@@ -1,0 +1,216 @@
+<?php
+/**
+ * @file
+ * Tests for the Migrate UI.
+ *
+ * These are all the cases to be tested (TBD are cases not currently tested):
+ *
+ * Permissions
+ * Content sets:
+ *   Valid content set
+ *   Missing description
+ *   Invalid weight
+ *   Validate listing (TBD)
+ *   Change primary key int->int, int->string, string->int, string->string (TBD)
+ *   Weight change
+ *   Source field present/none, default value present/empty (TBD)
+ *   Delete (TBD)
+ * Dashboard page:
+ *   Combos for clear/import/scan (TBD)
+ * Settings page:
+ *   Validate each setting, operation of refresh (TBD)
+ */
+
+/**
+ * UI tests for the Migrate module
+ *
+ */
+class MigrateFunctionalTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate UI'),
+      'description' => t('Test Migrate user interface'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $this->tablename = 'migrate_simpletest_sample';
+    db_create_table($ret, $this->tablename, $schema);
+    $sql = "INSERT INTO {" . $this->tablename . "} (id, title, body) VALUES(%d, '%s', '%s')";
+    db_query($sql, 893, 'Title 1', 'This is a body');
+    db_query($sql, 1027, 'Title 2', 'This is another body');
+    db_query($sql, 653223, 'Title 3', 'This is yet another body');
+
+    // Creates default view '$tablename'
+    tw_add_tables($this->tablename, TRUE);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test UI for listing/creating/editing content sets
+   */
+  function testContentSetsPages() {
+    // Create content set - missing description
+    $edit = array();
+    // TODO: test validation of machine_name
+    $edit['machine_name'] = 'simple_page_test';
+    $edit['contenttype'] = 'node/page';
+    $edit['view_name'] = $this->tablename;
+    $edit['weight'] = 5;
+    $this->drupalPost('admin/content/migrate', $edit, t('Add'));
+    $this->assertText(t('Content set description is required'), t('Post with no description'));
+    $edit['description'] = t('Simple page test');
+    $this->drupalPost(NULL, $edit, t('Add'));
+    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets} WHERE view_name='%s'",
+      $this->tablename));
+    if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
+      $path = parse_url($this->getUrl(), PHP_URL_PATH);
+      if ($this->assertEqual($path, "/admin/content/migrate/content_set/$mcsid",
+              t('Redirected to content set edit page'))) {
+        $edit = array();
+        $edit['weight'] = 'abc';
+        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        $this->assertText(t('Weight must be an integer value (positive or negative)'),
+          t('Non-numeric weight'));
+        $edit = array();
+        $edit['weight'] = 5.8;
+        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        $this->assertText(t('Weight must be an integer value (positive or negative)'),
+          t('Floating-point weight'));
+        $edit = array();
+        $edit['weight'] = -3;
+        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        $this->assertText(t('Changes saved'), t('Negative integer weight'));
+
+        // Add mappings to content set
+        $edit = array();
+        $edit['srcfield[title]'] = $this->tablename . '_title';
+        $edit['srcfield[body]'] = $this->tablename . '_body';
+        $this->drupalPost("/admin/content/migrate/content_set/$mcsid", $edit, t('Submit changes'));
+        if ($this->assertText(t('Changes saved'), t('Create field mappings'))) {
+          $sql = "SELECT mcmid FROM {migrate_content_mappings}
+                  WHERE mcsid=%d AND destfield='%s'";
+          $mcmid = db_result(db_query($sql, $mcsid, 'title'));
+          if (!$this->assertTrue($mcmid, t('Title mapping saved'))) {
+            return;
+          }
+          $mcmid = db_result(db_query($sql, $mcsid, 'body'));
+          if (!$this->assertTrue($mcmid, t('Body mapping saved'))) {
+            return;
+          }
+        }
+      }
+      else {
+        $this->error(t('Post went to page !url, mcsid=!mcsid',
+          array('!url' => $path, '!mcsid' => $mcsid)));
+      }
+    }
+  }
+
+  /**
+   * Test UI for processing
+   */
+  function testProcessPage() {
+    // Create content set
+    $edit = array();
+    $edit['machine_name'] = 'node_test';
+    $edit['description'] = 'Node test';
+    $edit['contenttype'] = 'node/page';
+    $edit['view_name'] = $this->tablename;
+    $edit['weight'] = 2;
+    $this->drupalPost('admin/content/migrate', $edit, t('Add'));
+    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets} WHERE view_name='%s'",
+      $this->tablename));
+    if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
+      $path = parse_url($this->getUrl(), PHP_URL_PATH);
+      if ($this->assertEqual($path, "/admin/content/migrate/content_set/$mcsid",
+              t('Redirected to content set edit page'))) {
+        // Add mappings to content set
+        $edit = array();
+        $edit['srcfield[title]'] = $this->tablename . '_title';
+        $edit['srcfield[body]'] = $this->tablename . '_body';
+        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        if ($this->assertText(t('Changes saved'), t('Create field mappings'))) {
+          $sql = "SELECT mcmid FROM {migrate_content_mappings}
+                  WHERE mcsid=%d AND destfield='%s'";
+          $mcmid = db_result(db_query($sql, $mcsid, 'title'));
+          if (!$this->assertTrue($mcmid, t('Title mapping saved'))) {
+            return;
+          }
+          $mcmid = db_result(db_query($sql, $mcsid, 'body'));
+          if (!$this->assertTrue($mcmid, t('Body mapping saved'))) {
+            return;
+          }
+          $edit = array();
+          $edit["importing[$mcsid]"] = $mcsid;
+          $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+          if (!$this->assertText('Imported 3 in', t('Migration completed successfully'))) {
+            $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                $this->content, $matches);
+            $this->error('Actual messages: ' . $matches[1]);
+            return;
+          }
+
+          $node = node_load(array('title' => 'Title 1'));
+          if (!$this->assertEqual($node->body, 'This is a body', t('Validate first node'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $node = node_load(array('title' => 'Title 2'));
+          if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $node = node_load(array('title' => 'Title 3'));
+          if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+        }
+      }
+      else {
+        $this->error(t('Post went to page !url', array('!url' => $path)));
+      }
+    }
+  }
+
+  /**
+   * Test UI for settings
+   */
+  function testSettingsPage() {
+  }
+}

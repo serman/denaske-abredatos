@@ -1,0 +1,11 @@
+name = Finder Autocomplete
+description = "Enables autocomplete textfields for finder."
+core = 6.x
+package = "Finder"
+dependencies[] = finder
+; Information added by drupal.org packaging script on 2011-03-03
+version = "6.x-1.10"
+core = "6.x"
+project = "finder"
+datestamp = "1299114667"
+

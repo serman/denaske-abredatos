@@ -1,0 +1,23 @@
+<?php
+
+function trackfield_stats_install() {
+  drupal_load('module', 'content');
+  content_notify('install', 'trackfield_stats');
+}
+
+function trackfield_stats_uninstall() {
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'trackfield_stats');
+}
+
+function trackfield_stats_enable() {
+  drupal_load('module', 'content');
+  content_notify('enable', 'trackfield_stats');
+}
+
+function trackfield_stats_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'trackfield_stats');
+}
+
+?>

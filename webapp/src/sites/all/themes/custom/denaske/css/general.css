@@ -1,0 +1,93 @@
+
+#finder-block-1{
+  
+  float:right;
+  width:480px;
+  padding:0;
+  margin:5px;
+  overflow:visible;
+  
+  
+}
+
+#finder-block-1 label{
+  
+  display:none;
+  
+}
+
+#finder-block-1 .form-item{
+  
+  float:left;
+  width:80%;
+  
+}
+
+#finder-block-1 #edit-1-wrapper input{
+  
+border:none;
+margin-left:10px;
+padding: 0 0 0 30px;
+background:url('../img/search.png') no-repeat 0 0;
+  
+  
+}
+
+#finder-block-1 #edit-1-wrapper input:focus{
+  
+  -moz-box-shadow:none;
+  box-shadow:none;
+  
+}
+
+
+
+#finder-block-1 #edit-submit{
+  
+  float:right;
+  -moz-border-radius:10px;
+  -webkit-border-radius:10px;
+  border-radius:10px;
+  
+}
+
+#busca-principal .form-item{
+  display:inline;
+  line-height:30px;
+  margin-right:40px;
+}
+
+#busca-principal .form-item input{
+ 
+   height:30px;
+
+  
+}
+
+#header-right{
+
+  overflow:visible;
+
+
+}
+
+
+/* fix */
+.row, .nested, .block
+{
+  overflow: visible;
+}
+
+#map-teaser{
+  
+  border:1px solid #ccc;
+  width:200px;
+  height:200px;
+  margin:10px;
+  
+  
+}
+
+
+
+

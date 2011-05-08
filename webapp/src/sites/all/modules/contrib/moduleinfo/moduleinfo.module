@@ -1,0 +1,224 @@
+<?php
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function moduleinfo_menu() {
+  $items['admin/settings/moduleinfo'] = array(
+    'title' => t('Moduleinfo'),
+    'description' => t('Settings for Moduleinfo'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('moduleinfo_settings_form'),
+    'access arguments' => array('moduleinfo settings'),
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function moduleinfo_perm(){ 
+  return array('moduleinfo settings');
+}
+
+/****
+an implementation of hook_form_alter.
+This hook gets the module specific data (from moduleinfo_get_info)
+for each module and inserts it into the system_modules form
+which is displayed on the pages admin/build/modules and admin/build/modules/list
+****/
+function moduleinfo_form_alter($form, $form_state, $form_id){
+    if ($form_id=="system_modules"){
+      if ("admin/build/modules/info" == $_GET['q'] || variable_get('moduleinfo_shown',TRUE)){
+        $files = module_rebuild_cache();
+        foreach($form["description"] as $module=>$description){
+            if ($files[$module]->status=="0")continue;
+            
+            $info = moduleinfo_get_info($module);
+            if (!$info)continue;
+            
+            $fieldset = array(
+              '#title' => t('ModuleInfo'),
+              '#collapsible' => TRUE,
+              '#collapsed' => TRUE,
+              '#value' => $info,
+            );
+            $form["description"][$module]['#value'] .= theme('fieldset', $fieldset);;
+        }
+      }
+      else {
+        drupal_set_message(l(t("View info about your modules"),"admin/build/modules/info"));
+      }
+    }
+}
+/****
+an implementation of hook_help
+****/
+function moduleinfo_help($section='') {
+  switch ($section) {
+    case "admin/help#moduleinfo":
+      return t("ModuleInfo informs the admin about changes a module makes to the interface.");
+  }
+  return '';
+  
+}
+
+/*** possible new hook?
+returns associative array:
+$info["created"]["pages"] = path => array(name=> description=>)
+$info["created"]["blocks"] = i => array(name=> description=>)
+$info["created"]["content-types"] = name => description
+$info["effected"]....[mirrors created]
+
+function moduleinfo_moduleinfo(){
+    $info = array();
+    $info["pages"]["effected"]['admin/build/modules/list'] = "Adds module-specific information to each module description.";
+    $info["pages"]["created"]['page_name'] = 'page description';
+    $info["content-types"]["created"]['name'] = 'content-type description';
+    $info['blocks']['created'][] = 'block description';
+    return $info;
+}
+***/
+
+/*** collects all the information we can find about a module from various hooks ***/
+function moduleinfo_get_info($module){
+    $output = '';
+    $help = moduleinfo_get_help($module);
+    if ($help){
+        $output.= '<strong>'.t('Help').'</strong>';
+        $output.= '<ul>'.join('',$help).'</ul>';
+    }
+    $pages = moduleinfo_get_pages($module);
+    if (isset($pages["config"])){
+        $output.= '<strong>'.t('Configuration').'</strong>';
+        $output.= '<ul>'.join('',$pages["config"]).'</ul>';
+    }
+    if (isset($pages["other"])){
+        $output.= '<strong>'.t('Pages').'</strong>';
+        $output.= '<ul>'.join('',$pages["other"]).'</ul>';
+    }
+    $blocks = moduleinfo_get_blocks($module);
+    if ($blocks){
+        $output.= '<strong>'.t('Blocks').'</strong>';
+        $output.= '<ul>'.join('',$blocks).'</ul>';
+    }
+    $cts = moduleinfo_get_content_types($module);
+    if ($cts){
+        $output.= '<strong>'.t('Content Types').'</strong>';
+        $output.= '<ul>'.join('',$cts).'</ul>';
+    }
+    return $output;
+}
+
+/*** check for help ***/
+function moduleinfo_get_help($module){
+    if (module_hook($module,"help")){
+        $res = module_invoke($module,"help","admin/help#".$module,arg());
+        if ($res)
+            return array("<li>".t("You can find help for this module on the page ").l(moduleinfo_get_menu_name("admin/help/".$module).t(" help"),"admin/help/".$module)."</li>");
+    }
+    return array();
+}
+
+/*** check for pages, both config and other ***/
+/** todo -- display w/ submenu structure **/
+function moduleinfo_get_pages($module,$cached=TRUE){
+    $pages = array();
+    if (module_hook($module,"menu")){
+        $menus = module_invoke($module, "menu", $cached);
+        if ($menus){
+            foreach ($menus as $path=>$menu){
+                if ($menu["type"]!=MENU_CALLBACK){  /** menu_callbacks wont appear in menus **/
+                    $full = moduleinfo_get_breadcrumb($path);
+                    $txt="<li>".l(moduleinfo_get_menu_name($path),$path).'<sub>'.t(" ($full)")."</sub></li>\n";
+                    if (strpos($path,"admin/settings")!==FALSE)
+                        $pages["config"][] = '<li>'.l(moduleinfo_get_menu_name($path),$path).'</li>';
+                    else
+                        $pages["other"][] = $txt;
+                }
+            }
+        }
+    }
+    return $pages;
+}
+
+/*** check for block ***/
+function moduleinfo_get_blocks($module){
+    /*** check for blocks ***/
+    $blocks = array();
+    if (module_hook($module, "block")){
+            $mblocks = module_invoke($module,"block","list");
+            if ($mblocks){
+                foreach($mblocks as $i=>$block){
+                    $blocks[] ="<li>".l($block["info"],"admin/build/block/configure/".$module."/".$i)."</li>\n";
+                }
+            }
+        }
+    return $blocks;
+}
+
+/*** check for custom content-types ***/
+function moduleinfo_get_content_types($module){
+    $content_types = array();
+    if (module_hook($module, "node_info")){
+            $nodes = module_invoke($module,"node_info");
+            if ($nodes){
+                foreach ($nodes as $name=>$node){
+                    $content_types[] = "<li>".l($node["name"],"admin/content/types/".$name).": ".$node["description"]."</li>\n";
+                }
+            }
+        }
+    return $content_types;
+}
+
+/*** grab a module name from the database ***/
+function moduleinfo_get_menu_name($path){
+    $result = db_query("SELECT link_title FROM {menu_links} WHERE link_path = '%s'",array($path));
+    $res = db_fetch_object($result)->link_title;
+    if (!$res){
+        $res = array_slice(explode("/",$path),-1);
+        $res = ucwords($res[0]);
+    }
+    return $res;
+}
+
+/*** generate a breadcrumb-style string from a menu path ***/
+function moduleinfo_get_breadcrumb($path){
+    $parts = explode("/",$path);
+    $current = "";
+    $breadcrumb = "";
+    foreach($parts as $part){
+        if ($breadcrumb!="")$breadcrumb.="&raquo;";
+        if ($current!="")$current.="/";
+        $current .= $part;
+        $breadcrumb .= moduleinfo_get_menu_name($current);
+    }
+    return $breadcrumb;
+}
+
+function moduleinfo_settings_form() {
+
+  $form['moduleinfo_shown'] = array(
+    '#title' => t('Shown by Default'),
+    '#type' => 'checkbox',
+    '#description' => t('Show info on the main modules page or only on the sub-page (admin/build/modules/info)'),
+    '#default_value' => variable_get('moduleinfo_shown', TRUE),
+  );
+  $form[] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Settings'),
+  );
+
+  return $form;
+}
+
+function moduleinfo_settings_form_submit($form, &$form_state) {
+  foreach ($form_state['values'] AS $name => $value) {
+    if (!strcmp(drupal_substr($name, 0, drupal_strlen('moduleinfo_')), 'moduleinfo_')) {
+      variable_set($name, $value);
+    }
+  }
+  drupal_set_message(t("The settings have been saved."));
+}
+

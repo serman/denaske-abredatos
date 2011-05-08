@@ -1,0 +1,450 @@
+<?php
+
+define('SERVICECONNECT_FACEBOOK_PATH_LOGIN', 'login-via-facebook');
+define('SERVICECONNECT_FACEBOOK_PATH_LINK', 'link-facebook-profile');
+define('SERVICECONNECT_FACEBOOK_PATH_ADMIN', 'admin/settings/serviceconnect/facebook');
+define('SERVICECONNECT_FACEBOOK_PATH_ADMIN_SETTINGS', 'admin/settings/serviceconnect/facebook/settings');
+define('SERVICECONNECT_FACEBOOK_PATH_ADMIN_TEST', 'admin/settings/serviceconnect/facebook/test');
+
+define('SERVICECONNECT_FACEBOOK_PERM_LOGIN', 'login via facebook');
+define('SERVICECONNECT_FACEBOOK_PERM_LINK', 'link facebook profile');
+
+define('SERVICECONNECT_FACEBOOK_VAR_API_KEY', 'serviceconnect_facebook_consumer_key');
+define('SERVICECONNECT_FACEBOOK_VAR_APPLICATION_SECRET', 'serviceconnect_facebook_consumer_secret');
+define('SERVICECONNECT_FACEBOOK_VAR_APPLICATION_ID', 'serviceconnect_facebook_application_id');
+
+define('SERVICECONNECT_FACEBOOK_VAR_GRAPH_API_URL', 'serviceconnect_facebook_request_token_url');
+define('SERVICECONNECT_FACEBOOK_VAR_GRAPH_API_URL_DEFAULT', 'https://graph.facebook.com/');
+define('SERVICECONNECT_FACEBOOK_VAR_LOGIN_URL', 'serviceconnect_facebook_user_authorization_url');
+define('SERVICECONNECT_FACEBOOK_VAR_LOGIN_URL_DEFAULT', 'https://www.facebook.com/login.php');
+
+define('SERVICECONNECT_FACEBOOK_VAR_TERMS', 'serviceconnect_facebook_terms');
+
+define('SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE', 'serviceconnect_facebook_profilepicture_size');
+define('SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE_DEFAULT', 'large');
+define('SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_PROFILE_FIELD', 'serviceconnect_facebook_profilepicture_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_LINK_PROFILE_FIELD', 'serviceconnect_facebook_link_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_NAME_PROFILE_FIELD', 'serviceconnect_facebook_name_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_FIRST_NAME_PROFILE_FIELD', 'serviceconnect_facebook_first_name_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_LAST_NAME_PROFILE_FIELD', 'serviceconnect_facebook_last_name_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_BIRTHDAY_PROFILE_FIELD', 'serviceconnect_facebook_birthday_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD', 'serviceconnect_facebook_gender_profile_field');
+define('SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD_MALE', 'serviceconnect_facebook_gender_profile_field_male');
+define('SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD_FEMALE', 'serviceconnect_facebook_gender_profile_field_female');
+
+define('SERVICECONNECT_FACEBOOK_VAR_FRIENDS_RELATIONSHIP_TYPE', 'serviceconnect_facebook_friends_relationship_type');
+
+/**
+ * Used as servicename for serviceconnect
+ *
+ * @see _serviceconnect_facebook_page_oauth_callback()
+ * @see serviceconnect_login_with_new_user()
+ * @see serviceconnect_link_service()
+ */
+define('SERVICECONNECT_FACEBOOK_SERVICE_NAME', 'facebook');
+
+/**
+ * Implementation of hook_perm().
+ */
+function serviceconnect_facebook_perm() {
+  return array(
+    SERVICECONNECT_FACEBOOK_PERM_LOGIN,
+    SERVICECONNECT_FACEBOOK_PERM_LINK,
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function serviceconnect_facebook_menu() {
+  $menu = array();
+  
+  $menu[SERVICECONNECT_FACEBOOK_PATH_LOGIN] = array(
+    'page callback' => 'serviceconnect_facebook_page_login',
+    'access arguments' => array(SERVICECONNECT_FACEBOOK_PERM_LOGIN),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $menu[SERVICECONNECT_FACEBOOK_PATH_LINK] = array(
+    'page callback' => 'serviceconnect_facebook_page_login',
+    'page arguments' => array(TRUE),
+    'access arguments' => array(SERVICECONNECT_FACEBOOK_PERM_LINK),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $menu[SERVICECONNECT_FACEBOOK_PATH_ADMIN] = array(
+    'title' => 'Facebook',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_facebook_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'serviceconnect_facebook.admin.inc',
+  );
+  
+  $menu[SERVICECONNECT_FACEBOOK_PATH_ADMIN_SETTINGS] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_facebook_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'serviceconnect_facebook.admin.inc',
+  );
+  
+  return $menu;
+}
+
+function serviceconnect_facebook_page_login($link_facebook_to_user = FALSE) {
+  if (!empty($_GET['session'])) {
+    return _serviceconnect_facebook_page_callback(1, NULL, NULL, $link_facebook_to_user);
+  } else {
+    return _serviceconnect_facebook_page_new($link_facebook_to_user);
+  }
+}
+
+function _serviceconnect_facebook_page_callback($phase = 1, $username = NULL, $email = NULL, $link = FALSE) {
+  global $user;
+  
+  try {
+    $session = (array) json_decode($_GET['session']);
+    $signature = $session['sig'];
+    unset($session['sig']);
+    if ($signature != _serviceconnect_facebook_generate_signature($session)) {
+      throw new Exception('Invalid signature');
+    }
+
+    $token = $session['access_token'];
+    $service_user_id = $session['uid'];
+    $expire_date = $session['expires'];
+    $session_key = $session['session_key'];
+    $secret = $session['secret'];
+
+    $response = _serviceconnect_facebook_graph_request('me', array(), $token);
+    $profile = array(
+      'name' => $response->name,
+      'first_name' => $response->first_name,
+      'last_name' => $response->last_name,
+      'service_profile_url' => $response->link,
+      'birthday' => $response->birthday,
+      'gender' => $response->gender,
+    );
+    
+    // Not implemented yet
+    $profile['friendscount'] = 0;
+
+    // Get profile picture filesize.
+    $picture_size = variable_get(SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE, SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE_DEFAULT);
+    try {
+      $profile['profile_image_filesize'] = _serviceconnect_facebook_graph_request('me/picture', array('type' => $picture_size), $token, 'content-length');
+    }
+    catch (Exception $e) {
+      // No profile picture available.
+      $profile['profile_image_filesize'] = 0;
+    }
+
+    $first_use = FALSE;
+    $scprofile = serviceconnect_get_uid_by_service_uid(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id);
+    
+    // Generate username / email form (only when not linking profile to current user).
+    if (!$link || !user_is_logged_in()) {
+      // Not a registered user yet (or unlinked)
+      if (!$scprofile && $phase == 1) {
+        return drupal_get_form(
+          'serviceconnect_register_form',
+          'serviceconnect_facebook',
+          $token,
+          $profile['name'],
+          variable_get(SERVICECONNECT_FACEBOOK_VAR_TERMS, ''),
+          SERVICECONNECT_FACEBOOK_SERVICE_NAME
+        );
+      }
+    }
+    
+    // The real registration / login work starts here
+    
+    if (user_is_logged_in()) {
+      if ($link) {
+        if ($scprofile->uid) {
+          if ($scprofile->uid != $user->uid) {
+            // The Facebook account already has another Drupal account linked (called $service_uid),
+            // The user already has an account which he uses, the flow to get here is:
+            // 1) Login via Facebook (without migrating) -> generates a new account
+            // 2) Try to link old account with their Facebook account
+            drupal_set_message(t('Unable to link Facebook account to your user, this Facebook account is already in use for another account'), 'error');
+          } else {
+            // User is already migrated, stay logged in with $user->uid,
+            // however, call this function to update statistics
+            serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+            drupal_set_message(t('Succesfully logged in with Facebook'));
+          }
+        } else {
+          // This is the usual migration, no Facebook account is linked to the Drupal account yet
+          $scpid = serviceconnect_link_service(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id,
+            $profile['service_profile_url'], $profile['name'], $expire_date);
+          drupal_set_message(t('Your Facebook profile is now linked to your account'));
+          $first_use = TRUE;
+        }
+      } else {
+        if ($scprofile->uid) {
+          serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+          drupal_set_message(t('Succesfully logged in with Facebook'));
+        } else {
+          // We are already logged in, but want to login with another account via Facebook
+          $uid = serviceconnect_login_with_new_user(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id, $username, $email);
+          $scpid = serviceconnect_link_service(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id,
+            $profile['service_profile_url'], $profile['name'], $expire_date);
+          drupal_set_message(t('Succesfully logged in with Facebook'));
+          $first_use = TRUE;
+        }
+      }
+    } else {
+      if ($scprofile->uid) {
+        serviceconnect_login_with_existing_user($scprofile->scpid, $scprofile->uid, $expire_date);
+        drupal_set_message(t('Succesfully logged in with Facebook'));
+      } else {
+        $uid = serviceconnect_login_with_new_user(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id, $username, $email);
+        $scpid = serviceconnect_link_service(SERVICECONNECT_FACEBOOK_SERVICE_NAME, $service_user_id,
+          $profile['service_profile_url'], $profile['name'], $expire_date);
+        drupal_set_message(t('Succesfully logged in with Facebook'));
+        $first_use = TRUE;
+      }
+    }
+    
+    if (empty($scpid)) {
+      $scpid = $scprofile->scpid;
+    }
+
+    // Save record in serviceconnect_user_facebook
+    $sql = 'SELECT suf.profile_image_filesize, suf.friendscount
+    FROM {serviceconnect_user_facebook} suf
+    WHERE suf.scpid = %d';
+    $res = db_query($sql, $scpid);
+    if ($rec = db_fetch_array($res)) {
+      $old_profile_image_filesize = $rec['profile_image_filesize'];
+      $old_friendscount = $rec['friendscount'];
+      $sql = 'UPDATE {serviceconnect_user_facebook} SET
+      token = \'%s\',
+      name = \'%s\',
+      profile_image_filesize = \'%s\',
+      friendscount = %d
+      WHERE scpid = %d';
+      db_query($sql, $token, $profile['name'], $profile['profile_image_filesize'], $profile['friendscount'], $scpid);
+    } else {
+      $old_profile_image_filesize = 0;
+      $old_friendscount = 0;
+
+      $suf = new stdClass();
+      $suf->scpid = $scpid;
+      $suf->token = $token;
+      $suf->name = $profile['name'];
+      $suf->profile_image_filesize = $profile['profile_image_filesize'];
+      $suf->friendscount = $profile['friendscount'];
+      drupal_write_record('serviceconnect_user_facebook', $suf);
+    }
+  } catch (Exception $e){
+    global $_serviceconnect_facebook_last_response;
+    if ($_serviceconnect_facebook_last_response->code == 502) {
+      drupal_set_message(t('Unable to login with Facebook. Facebook seems to be over capacity at the moment.'), 'error');
+    } else {
+      drupal_set_message(t('Unable to login with Facebook'), 'error');
+    }
+    watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_ALERT);
+    drupal_goto('');
+    return '';
+  }
+
+  // We are now logged in, import profile information from Facebook
+  try {
+    // Import information into profile fields
+    $profile_fields = array(
+      SERVICECONNECT_FACEBOOK_VAR_NAME_PROFILE_FIELD => $profile['name'],
+      SERVICECONNECT_FACEBOOK_VAR_FIRST_NAME_PROFILE_FIELD => $profile['first_name'],
+      SERVICECONNECT_FACEBOOK_VAR_LAST_NAME_PROFILE_FIELD => $profile['last_name'],
+      SERVICECONNECT_FACEBOOK_VAR_LINK_PROFILE_FIELD => $profile['service_profile_url'],
+    );
+
+    if (!empty($profile['birthday'])) {
+      $birthday = explode('/', $profile['birthday']);
+      $birthday = array(
+        'day' => (int) $birthday[1],
+        'month' => (int) $birthday[0],
+        'year' => (int) $birthday[2]
+      );
+      $birthday = serialize($birthday);
+      $profile_fields[SERVICECONNECT_FACEBOOK_VAR_BIRTHDAY_PROFILE_FIELD] = $birthday;
+    }
+    
+    switch ($profile['gender']) {
+      case 'male':
+        $gender = variable_get(SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD_MALE, 'male');
+        break;
+      case 'female':
+        $gender = variable_get(SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD_MALE, 'female');
+        break;
+      default:
+        $gender = '';
+        break;
+    }
+    $profile_fields[SERVICECONNECT_FACEBOOK_VAR_GENDER_PROFILE_FIELD] = $gender;
+
+    // Get profile picture.
+    if ($old_profile_image_filesize != $profile['profile_image_filesize']) {
+      $picture_size = variable_get(SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE, SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_SIZE_DEFAULT);
+      try {
+        $picture_url = _serviceconnect_facebook_graph_request('me/picture', array('type' => $picture_size), $token, 'url');
+        $profile_fields[SERVICECONNECT_FACEBOOK_VAR_PROFILEPICTURE_PROFILE_FIELD] = $picture_url;
+      }
+      catch (Exception $e) {
+        // Log error, but continue since it is not critical.
+        watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_WARNING);
+      }
+    }
+    
+    $fields = array();
+    foreach ($profile_fields as $var => $value) {
+      if ($field = variable_get($var, '')) {
+        $fields[$field] = $value;
+      }
+    }
+    serviceconnect_save_profile($fields);
+    
+    $redirect = '';
+    if ($first_use && !$link){
+      $redirect = serviceconnect_first_use(t(SERVICECONNECT_FACEBOOK_SERVICE_NAME));
+    }
+    $redirect or $redirect = 'user';
+    drupal_goto($redirect);
+    return '';
+  } catch (Exception $e){
+    drupal_set_message(t('Unable to import profile information from Facebook'), 'error');
+    watchdog('ServiceConnect', $e->getMessage(), array(), WATCHDOG_ALERT);
+    drupal_goto('');
+    return '';
+  }
+}
+
+function _serviceconnect_facebook_page_new($link_facebook_to_user = FALSE){
+  $url = variable_get(SERVICECONNECT_FACEBOOK_VAR_LOGIN_URL, SERVICECONNECT_FACEBOOK_VAR_LOGIN_URL_DEFAULT);
+  $params = array();
+
+  $next_path = $link_facebook_to_user ? SERVICECONNECT_FACEBOOK_PATH_LINK : SERVICECONNECT_FACEBOOK_PATH_LOGIN;
+  $cancel_path = 'user';
+
+  $params['api_key'] = variable_get(SERVICECONNECT_FACEBOOK_VAR_APPLICATION_ID, '');
+  $params['cancel_url'] = url($cancel_path, array('absolute' => TRUE));
+  $params['next'] = url($next_path, array('absolute' => TRUE));
+  $params['display'] = 'page';
+  $params['fbconnect'] = '1';
+  $params['return_session'] = '1';
+  $params['session_version'] = '3';
+  $params['v'] = '1.0';
+
+  $query = http_build_query($params, '', '&');
+  drupal_goto($url, $query);
+  return '';
+}
+
+function serviceconnect_facebook_get_active_token() {
+  global $user;
+  if (!$scpid = serviceconnect_get_scpid_by_service(SERVICECONNECT_FACEBOOK_SERVICE_NAME)) {
+    return FALSE;
+  }
+  $sql = 'SELECT suh.token
+  FROM {serviceconnect_user_facebook} suh
+  WHERE suh.scpid = %d';
+  $res = db_query($sql, $scpid);
+  return db_fetch_array($res);
+}
+
+function _serviceconnect_facebook_secret_hash($data) {
+  $secret = drupal_get_private_key();
+  return substr(md5($data.$secret), 0, 16);
+}
+
+/**
+ * Request data from Facebook Graph API
+ *
+ * @param string $data_key Key which identifies the data to retreive
+ * @param array $params Optional params to pass via query
+ * @param string $token Access token
+ * @param string $mode Operation mode
+ *   Use one of the following values:
+ *   'json': Retreive json decoded data
+ *   'url': Return the URL used to retreive data
+ *   'content-length': Get the content length
+ * @return <type>
+ */
+function _serviceconnect_facebook_graph_request($data_key, $params = array(), $token = NULL, $mode = 'json') {
+  if (empty($token)) {
+    $token = serviceconnect_facebook_get_active_token();
+  }
+  if ($token) {
+    $params['access_token'] = $token;
+  }
+  $query = http_build_query($params, '', '&');
+  $url = variable_get(SERVICECONNECT_FACEBOOK_VAR_GRAPH_API_URL, SERVICECONNECT_FACEBOOK_VAR_GRAPH_API_URL_DEFAULT);
+  $url = "$url$data_key?$query";
+  if ($mode == 'url') {
+    return $url;
+  }
+  $method = $mode == 'json' ? 'GET' : 'HEAD';
+  $headers = array(
+    'Accept-Language' => 'en', // Disable translations in output
+  );
+  if (!$response = drupal_http_request($url, $headers, $method)) {
+    throw new Exception('Unable to request data from Graph API');
+  }
+  if ($response->code != 200 && $response->code != 302) {
+    throw new Exception('Got response code ' . $response->code . ' from Graph API');
+  }
+  if ($mode == 'json') {
+    return json_decode($response->data);
+  }
+  elseif ($mode == 'content-length') {
+    if (isset($response->headers['Content-Length'])) {
+      return (int) $response->headers['Content-Length'];
+    }
+    else {
+      return 0;
+    }
+  }
+  else {
+    return $response;
+  }
+}
+
+/**
+ * Register callback for serviceconnect module
+ *
+ * @see serviceconnect_register_form_submit()
+ */
+function serviceconnect_facebook_register($token, $username, $email) {
+  _serviceconnect_facebook_page_callback(2, $username, $email);
+}
+
+/**
+ * Generate a signature for the given params and secret.
+ *
+ * @param Array $params the parameters to sign
+ * @return String the generated signature
+ */
+function _serviceconnect_facebook_generate_signature($params) {
+  $secret = variable_get(SERVICECONNECT_FACEBOOK_VAR_APPLICATION_SECRET, '');
+
+  /**
+   * This is the generateSignature function from facebook.php.
+   *
+   * @see http://github.com/facebook/php-sdk/
+   */
+
+  // work with sorted data
+  ksort($params);
+
+  // generate the base string
+  $base_string = '';
+  foreach($params as $key => $value) {
+    $base_string .= $key . '=' . $value;
+  }
+  $base_string .= $secret;
+
+  return md5($base_string);
+}

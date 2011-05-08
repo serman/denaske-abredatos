@@ -1,0 +1,35 @@
+name = DBTNG
+description = Drupal 7 database 
+
+; Compatability and dependencies
+core = 6.x
+php = 5.2
+dependencies[] = autoload
+
+; Autoload information
+files[] = database/database.inc
+files[] = database/log.inc
+files[] = database/mysql/database.inc
+files[] = database/mysql/install.inc
+files[] = database/mysql/query.inc
+files[] = database/mysql/schema.inc
+files[] = database/pgsql/database.inc
+files[] = database/pgsql/install.inc
+files[] = database/pgsql/query.inc
+files[] = database/pgsql/schema.inc
+files[] = database/prefetch.inc
+files[] = database/query.inc
+files[] = database/schema.inc
+files[] = database/select.inc
+files[] = database/sqlite/database.inc
+files[] = database/sqlite/install.inc
+files[] = database/sqlite/query.inc
+files[] = database/sqlite/schema.inc
+files[] = includes/pager.inc
+files[] = includes/tablesort.inc
+; Information added by drupal.org packaging script on 2011-03-12
+version = "6.x-1.0-rc2"
+core = "6.x"
+project = "dbtng"
+datestamp = "1299889873"
+

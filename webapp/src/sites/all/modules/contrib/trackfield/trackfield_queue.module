@@ -1,0 +1,129 @@
+<?php
+
+DEFINE('TRACKFIELD_QUEUE_QUEUED', 1);
+DEFINE('TRACKFIELD_QUEUE_WORKING', 2);
+DEFINE('TRACKFIELD_QUEUE_CANCELLED', 3);
+DEFINE('TRACKFIELD_QUEUE_SUCCESS', 4);
+DEFINE('TRACKFIELD_QUEUE_FAILED', 5);
+
+/*
+ * Hook cron - process one or more queue entries.
+ */
+
+$TRACKFIELD_QUEUE_NOQUEUE = FALSE;
+
+function _trackfield_queue_noqueue() {
+  global $TRACKFIELD_QUEUE_NOQUEUE;
+  return $TRACKFIELD_QUEUE_NOQUEUE;
+}
+
+function trackfield_queue_cron() {
+  /* Don't queue anything - 'cos we're processing the queue! */
+  global $TRACKFIELD_QUEUE_NOQUEUE;
+  $TRACKFIELD_QUEUE_NOQUEUE = TRUE;
+
+  $result = db_query('SELECT * from {trackfield_queue} WHERE status = %d ORDER BY timestamp_queued',
+    TRACKFIELD_QUEUE_QUEUED);
+  while ($queue = db_fetch_object($result)) {
+    $node = node_load($queue->nid);
+    if ($node->nid) {
+      /* Become the original author */
+      global $user;
+      $user = user_load(array('uid' => $node->uid));
+      watchdog('trackfield_queue', 'Processing node ' . $node->nid);
+
+      /*
+       * This basically re-submits the form, but because of the above
+       * global we won't queue things this time and they will be
+       * processed.
+       * Just make sure we don't create a new version by passing in a
+       * value of zero for the revision field.
+       */
+
+      $err = drupal_execute($node->type .'_node_form', array('revision' => 0), $node);
+      db_query('UPDATE {trackfield_queue} SET status = %d, timestamp_processed = %d WHERE nid = %d and vid = %d',
+        TRACKFIELD_QUEUE_SUCCESS, time(), $node->nid, $node->vid);
+
+      watchdog('trackfield_queue', 'Finished node ' . $node->nid);
+      /* Go back to anonymous */
+      $user = drupal_anonymous_user();
+
+    }
+  }
+}
+
+/*
+ * Check if we should queue this item/node combo.
+ */
+
+function _trackfield_queue_should_queue($itemlen, $node) {
+  if (_trackfield_queue_noqueue()) return FALSE;
+
+   /* TODO: this should be a parameter, zero for testing */
+  if ($itemlen > 0) return TRUE;
+}
+
+/*
+ * Check the given item and see if it should be queued.
+ * Return TRUE/FLASE depending on what happened.
+ */
+
+function _trackfield_queue_check_queue($items, $node) {
+  if (_trackfield_queue_noqueue()) return FALSE;
+
+  $queue = FALSE;
+  foreach ($items as $delta => $item) {
+    $attributes = unserialize($item['attributes']);
+    if ($attributes['should_queue']) {
+      $queue = TRUE;
+      break;
+    }
+  }
+
+  if ($queue) {
+    _trackfield_queue_queue($node);
+  } else {
+    /*
+     * If this data should not be queued, clear any old
+     * versions of the node that might still be hanging around.
+     */
+    _trackfield_queue_clear($node);
+  }
+
+  return $queue;
+}
+
+/*
+ * Queue the given node.
+ */
+
+function _trackfield_queue_queue($node) {
+/*
+ * Remember what nodes have been queued because a node can
+ * have more than one field.
+ */
+
+  static $queued_nids = array();
+  if (!in_array($node->nid, $queued_nids)) {
+    _trackfield_queue_clear($node);
+
+/* And insert our node details */
+    db_query('INSERT INTO {trackfield_queue} (nid, vid, timestamp_queued, status) values (%d, %d, %d, %d)',
+      $node->nid, $node->vid, time(), TRACKFIELD_QUEUE_QUEUED);
+
+    drupal_set_message('Trackfield data has been queued for processing.');
+
+    $queued_nids[] = $node->nid;
+  }
+}
+
+/*
+ * Clear any instances of the given node from the queue.
+ */
+
+function _trackfield_queue_clear($node) {
+  db_query('UPDATE {trackfield_queue} SET status = %d WHERE nid = %d and status = %d',
+    TRACKFIELD_QUEUE_CANCELLED, $node->nid, TRACKFIELD_QUEUE_QUEUED);
+}
+
+?>

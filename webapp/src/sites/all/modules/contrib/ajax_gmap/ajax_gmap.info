@@ -1,0 +1,8 @@
+; $Id$
+name = "AJAX GMAP"
+description = "Enable ajax for pager and exposed filters of gmap views"
+package = "Location"
+dependencies[] = "views"
+dependencies[] = "gmap"
+core = "6.x"
+version = "6.x-1.0"

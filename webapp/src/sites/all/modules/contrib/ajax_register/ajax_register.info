@@ -1,0 +1,15 @@
+; $Id: ajax_register.info,v 1.1.2.2 2009/09/09 19:51:31 compujohnny Exp $
+name = Ajax Login-Register
+description = Provides a block that enables the user to register and login with an ajax popup.
+core = 6.x
+package = Ajax
+dependencies[] = ajax
+dependencies[] = ajax_thickbox
+
+
+; Information added by drupal.org packaging script on 2010-01-15
+version = "6.x-1.5"
+core = "6.x"
+project = "ajax_register"
+datestamp = "1263521403"
+

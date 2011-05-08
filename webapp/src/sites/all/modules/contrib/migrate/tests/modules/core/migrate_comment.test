@@ -1,0 +1,314 @@
+<?php
+/**
+ * @file
+ * Tests for comment migration
+ *
+ */
+
+class MigrateCommentTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Comments'),
+      'description' => t('Test migration support for comments'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'comment');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+
+    // Create test tables
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $this->storytable = 'migrate_simpletest_story';
+    db_create_table($ret, $this->storytable, $schema);
+    $sql = "INSERT INTO {" . $this->storytable . "} (id, title, body) VALUES(%d, '%s', '%s')";
+    db_query($sql, 893, 'Title 1', 'This is a body');
+    db_query($sql, 1027, 'Title 2', 'This is another body');
+    db_query($sql, 653223, 'Title 3', 'This is yet another body');
+    tw_add_tables($this->storytable, TRUE);
+
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'username' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'email' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $this->usertable = 'migrate_simpletest_user';
+    db_create_table($ret, $this->usertable, $schema);
+    $sql = "INSERT INTO {" . $this->usertable . "} (id, username, email) VALUES(%d, '%s', '%s')";
+    db_query($sql, 51, 'user1', 'user1@example.com');
+    db_query($sql, 831, 'user2', 'user2@example.com');
+    db_query($sql, 98374, 'user3', 'user3@example.com');
+    tw_add_tables($this->usertable, TRUE);
+
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'storyid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'userid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'parentid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'comment_text' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'status' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $this->commenttable = 'migrate_simpletest_comment';
+    db_create_table($ret, $this->commenttable, $schema);
+    $sql = "INSERT INTO {" . $this->commenttable . "}
+            (id, storyid, userid, parentid, comment_text, status)
+            VALUES(%d, %d, %d, %d, '%s', %d)";
+    db_query($sql, 52, 893, 51, 0, 'Comment by user1 on Title 1', 0);
+    db_query($sql, 38383, 1027, 831, 0, 'Comment by user2 on Title 2', 1);
+    db_query($sql, 41893, 1027, 51, 38383, 'Reply by user1 to user2 on Title 2', 0);
+    db_query($sql, 123483, 653223, 98374, 0, 'Comment by user3 on Title 3', 1);
+    tw_add_tables($this->commenttable, TRUE);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test comment migration
+   */
+  function testComment() {
+    // First, test migration from source IDs
+
+    // Create the content sets
+    $content_set = new stdClass;
+    $content_set->view_name = $this->storytable;
+    $content_set->sourcekey = 'id';
+    $content_set->contenttype = 'node';
+    $content_set->desttype = 'story';
+    $content_set->machine_name = 'stories';
+    $content_set->description = 'Stories';
+    $content_set->weight = 1;
+    $storymcsid = migrate_save_content_set($content_set, array('base_table' => $this->storytable));
+    $storymap = migrate_map_table_name($storymcsid);
+    $mapping = new stdClass;
+    $mapping->mcsid = $storymcsid;
+    $mapping->srcfield = $this->storytable . '_title';
+    $mapping->destfield = 'title';
+    migrate_save_content_mapping($mapping);
+    $mapping = new stdClass;
+    $mapping->mcsid = $storymcsid;
+    $mapping->srcfield = $this->storytable . '_body';
+    $mapping->destfield = 'body';
+    migrate_save_content_mapping($mapping);
+
+    $content_set = new stdClass;
+    $content_set->view_name = $this->usertable;
+    $content_set->sourcekey = 'id';
+    $content_set->contenttype = 'user';
+    $content_set->machine_name = 'users';
+    $content_set->description = 'Users';
+    $content_set->weight = 2;
+    $usermcsid = migrate_save_content_set($content_set, array('base_table' => $this->usertable));
+    $usermap = migrate_map_table_name($usermcsid);
+    $mapping = new stdClass;
+    $mapping->mcsid = $usermcsid;
+    $mapping->srcfield = $this->usertable . '_username';
+    $mapping->destfield = 'name';
+    migrate_save_content_mapping($mapping);
+    $mapping = new stdClass;
+    $mapping->mcsid = $usermcsid;
+    $mapping->srcfield = $this->usertable . '_email';
+    $mapping->destfield = 'mail';
+    migrate_save_content_mapping($mapping);
+
+    $content_set = new stdClass;
+    $content_set->view_name = $this->commenttable;
+    $content_set->sourcekey = 'id';
+    $content_set->contenttype  = 'comment';
+    $content_set->machine_name = 'comments';
+    $content_set->description = 'Comments';
+    $content_set->weight = 3;
+    $commentmcsid = migrate_save_content_set($content_set, array('base_table' => $this->commenttable));
+    $commentmap = migrate_map_table_name($commentmcsid);
+    $storymapping = new stdClass;
+    $storymapping->mcsid = $commentmcsid;
+    $storymapping->srcfield = $this->commenttable . '_storyid';
+    $storymapping->destfield = 'nodesourceid';
+    migrate_save_content_mapping($storymapping);
+    $usermapping = new stdClass;
+    $usermapping->mcsid = $commentmcsid;
+    $usermapping->srcfield = $this->commenttable . '_userid';
+    $usermapping->destfield = 'usersourceid';
+    migrate_save_content_mapping($usermapping);
+    $parentmapping = new stdClass;
+    $parentmapping->mcsid = $commentmcsid;
+    $parentmapping->srcfield = $this->commenttable . '_parentid';
+    $parentmapping->destfield = 'commentsourceid';
+    migrate_save_content_mapping($parentmapping);
+    $mapping = new stdClass;
+    $mapping->mcsid = $commentmcsid;
+    $mapping->srcfield = $this->commenttable . '_comment_text';
+    $mapping->destfield = 'comment';
+    migrate_save_content_mapping($mapping);
+    $mapping = new stdClass;
+    $mapping->mcsid = $commentmcsid;
+    $mapping->srcfield = $this->commenttable . '_status';
+    $mapping->destfield = 'status';
+    migrate_save_content_mapping($mapping);
+
+    $edit = array("importing[$storymcsid]" => $storymcsid,
+                  "importing[$usermcsid]" => $usermcsid,
+                  "importing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Imported 3 in') ||
+        !$this->assertText('Imported 4 in') ||
+        !$this->assertText("done with 'Stories'") ||
+        !$this->assertText("done with 'Users'") ||
+        !$this->assertText("done with 'Comments")) {
+      $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                           $this->content, $matches);
+      $this->error('Actual messages: ' . $matches[1]);
+    }
+
+    // Make sure all the data matches from source to destination
+    $sql = "SELECT COUNT(*)
+            FROM {migrate_simpletest_comment} c
+
+            INNER JOIN {migrate_simpletest_story} s ON c.storyid=s.id
+            INNER JOIN {" . $storymap . "} smap ON s.id=smap.sourceid
+            INNER JOIN {node} ds ON smap.destid=ds.nid
+            INNER JOIN {node_revisions} dsr ON ds.vid=dsr.vid
+
+            INNER JOIN {migrate_simpletest_user} u ON c.userid=u.id
+            INNER JOIN {" . $usermap . "} umap ON u.id=umap.sourceid
+            INNER JOIN {users} du ON umap.destid=du.uid
+
+            INNER JOIN {" . $commentmap . "} cmap ON c.id=cmap.sourceid
+            INNER JOIN {comments} dc ON cmap.destid=dc.cid
+
+            LEFT JOIN {" . $commentmap . "} cmap2 ON c.parentid=cmap2.sourceid
+
+            WHERE s.title=ds.title AND s.body=dsr.body
+              AND u.username=du.name AND u.email=du.mail
+              AND c.comment_text=dc.comment AND (c.parentid=0 OR cmap2.destid=dc.pid)
+              AND c.status=dc.status";
+    $count = db_result(db_query($sql));
+    if (!$this->assertEqual($count, 4, t('4 comments migrated successfully'))) {
+      $this->error(t('Actual count: !count', array('!count' => $count)));
+    }
+
+    // Clear the comment content sets
+    $edit = array("clearing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Deleted 4 in') ||
+        !$this->assertText("done with 'Comments")) {
+      $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                           $this->content, $matches);
+      $this->error('Actual messages: ' . $matches[1]);
+    }
+
+    // Now, let's do it again, but expressing incoming IDs as Drupal IDs
+    // Convert source IDs to Drupal IDs
+    $sql = "SELECT * FROM {migrate_simpletest_comment}";
+    $result = db_query($sql);
+    while ($row = db_fetch_object($result)) {
+      $nodeid = _migrate_xlat_get_new_id('node', $row->storyid);
+      $userid = _migrate_xlat_get_new_id('user', $row->userid);
+      $parentid = _migrate_xlat_get_new_id('comment', $row->parentid);
+      db_query("UPDATE {migrate_simpletest_comment}
+                 SET storyid=%d, userid=%d, parentid=%d
+                WHERE id=%d",
+                $nodeid, $userid, $parentid, $row->id);
+    }
+    // Change the mappings to indicate the sources are Drupal IDs
+    $storymapping->destfield = 'nid';
+    migrate_save_content_mapping($storymapping);
+    $usermapping->destfield = 'uid';
+    migrate_save_content_mapping($usermapping);
+    $parentmapping->destfield = 'pid';
+    migrate_save_content_mapping($parentmapping);
+
+    // Reimport
+    $edit = array("importing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Imported 4 in') ||
+        !$this->assertText("done with 'Comments")) {
+      $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                           $this->content, $matches);
+      $this->error('Actual messages: ' . $matches[1]);
+    }
+
+    // Make sure all the data matches from source to destination
+    $sql = "SELECT COUNT(*)
+            FROM {migrate_simpletest_comment} c
+            INNER JOIN {" . $commentmap . "} cmap ON c.id=cmap.sourceid
+            INNER JOIN {comments} dc ON cmap.destid=dc.cid
+            WHERE c.comment_text=dc.comment AND c.storyid=dc.nid
+              AND c.userid=dc.uid AND c.parentid=dc.pid";
+    $count = db_result(db_query($sql));
+    if (!$this->assertEqual($count, 4, t('4 comments migrated successfully'))) {
+      $this->error(t('Actual count: !count', array('!count' => $count)));
+    }
+  }
+}
