@@ -1,0 +1,5 @@
+; $Id$
+name = Migrate denaske
+description = Does awesome things. Makes tea. Washes up. Favours of a personal nature.
+project = denaske
+core = 6.x

@@ -1,0 +1,676 @@
+<?php
+/**
+ * @file
+ * Tests for node migration
+ */
+
+class MigrateNodeTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Nodes'),
+      'description' => t('Test migration support for nodes'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED, 'access content',
+      'administer nodes', 'create page content', 'delete any page content'));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test UI for processing
+   */
+  function testNodeProcessing() {
+    // A couple of authors
+    $user1 = $this->drupalCreateUser(array('create page content'));
+    $user2 = $this->drupalCreateUser(array('create page content'));
+
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+        'authorname' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+        'authoruid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'authoredon' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'changedon' => array(
+          'type' => 'datetime',
+          'not null' => FALSE,
+        ),
+        'published' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'moderate' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'promote' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'sticky' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'createrev' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'language' => array(
+          'type' => 'varchar',
+          'length' => 2,
+          'not null' => FALSE,
+        ),
+        'format' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $tablename = 'migrate_node_sample';
+    db_create_table($ret, $tablename, $schema);
+    // Creates default view '$tablename'
+    tw_add_tables($tablename, TRUE);
+    views_discover_default_views(TRUE);
+
+    $sql = "INSERT INTO {" . $tablename . "}
+            (id, title, body, authorname, authoruid, authoredon, changedon,
+             published, moderate, promote, sticky, createrev, language, format)
+            VALUES(%d, '%s', '%s', '%s', %d, %d, '%s',
+                   %d, %d, %d, %d, %d, '%s', %d)";
+    db_query($sql,
+             893, 'Title 1', 'This is a body', $user1->name, NULL,
+              mktime(13, 28, 51, 10, 15, 2009), '2009-10-17 09:03:59',
+             1, 1, 1, 1, 1, 'en', 1);
+    db_query($sql,
+             1027, 'Title 2', 'This is another body', NULL, $user2->uid,
+              mktime(0, 0, 0, 10, 29, 2009), '2009-10-29 00:00:00',
+             0, 0, 0, 0, 0, 'fr', 2);
+    db_query($sql,
+             653223, 'Title 3', 'This is yet another body', $user2->name, NULL,
+              mktime(23, 59, 59, 11, 10, 2009), '2009-11-11 12:38:10',
+             1, 0, 0, 1, 1, 'en', 1);
+
+    // Create content set
+    $content_set = new stdClass;
+    $content_set->machine_name = 'node_test';
+    $content_set->description = 'Node test';
+    $content_set->contenttype = 'node';
+    $content_set->desttype = 'page';
+    $content_set->view_name = $tablename;
+    $content_set->sourcekey = 'id';
+    $content_set->weight = 2;
+    $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+    cache_clear_all('schema', 'cache');
+    if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
+      // Add mappings to content set
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_title';
+      $edit->destfield = 'title';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup title mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_body';
+      $edit->destfield = 'body';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup body mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_authorname';
+      $edit->destfield = 'name';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup author name mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_authoruid';
+      $edit->destfield = 'uid';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup author uid mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_authoredon';
+      $edit->destfield = 'created';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup created mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_changedon';
+      $edit->destfield = 'changed';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup changed mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_published';
+      $edit->destfield = 'status';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup published mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_moderate';
+      $edit->destfield = 'moderate';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup moderate mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_promote';
+      $edit->destfield = 'promote';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup promote mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_sticky';
+      $edit->destfield = 'sticky';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup sticky mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_createrev';
+      $edit->destfield = 'revision';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup revision mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_language';
+      $edit->destfield = 'language';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup language mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_format';
+      $edit->destfield = 'format';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup format mapping'));
+
+      $edit = array("importing[$mcsid]" => $mcsid);
+      $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+      if (!$this->assertText('Imported 3 in', t('Migration completed successfully'))) {
+        $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+            $this->content, $matches);
+        $this->error('Actual messages: ' . $matches[1]);
+        return;
+      }
+      else {
+        $node = node_load(array('title' => 'Title 1'));
+        $nid1 = $node->nid;
+        if (!$this->assertEqual($node->body, 'This is a body', t('Validate first node body'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->uid, $user1->uid, t('Validate first node author'))) {
+          $this->error('user1 uid=' . $user1->uid);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $created = mktime(13, 28, 51, 10, 15, 2009);
+        if (!$this->assertEqual($node->created, $created, t('Validate first node created'))) {
+          $this->error('Expected: ' . $created);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $changed = mktime(9, 3, 59, 10, 17, 2009);
+        if (!$this->assertEqual($node->changed, $changed, t('Validate first node changed'))) {
+          $this->error('Expected: ' . $changed);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->status, 1, t('Validate first node status'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->moderate, 1, t('Validate first node moderate'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->promote, 1, t('Validate first node promote'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->sticky, 1, t('Validate first node sticky'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->language, 'en', t('Validate first node language'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->format, 1, t('Validate first node format'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+
+        $node = node_load(array('title' => 'Title 2'));
+        $nid2 = $node->nid;
+        if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node body'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->uid, $user2->uid, t('Validate second node author'))) {
+          $this->error('user2 uid=' . $user2->uid);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $created = mktime(0, 0, 0, 10, 29, 2009);
+        if (!$this->assertEqual($node->created, $created, t('Validate second node created'))) {
+          $this->error('Expected: ' . $created);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $changed = mktime(0, 0, 0, 10, 29, 2009);
+        if (!$this->assertEqual($node->changed, $changed, t('Validate second node changed'))) {
+          $this->error('Expected: ' . $changed);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->status, 0, t('Validate second node status'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->moderate, 0, t('Validate second node moderate'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->promote, 0, t('Validate second node promote'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->sticky, 0, t('Validate second node sticky'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->language, 'fr', t('Validate second node language'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->format, 2, t('Validate second node format'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+
+        $node = node_load(array('title' => 'Title 3'));
+        $nid3 = $node->nid;
+        if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node body'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->uid, $user2->uid, t('Validate third node author'))) {
+          $this->error('user2 uid=' . $user2->uid);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $created = mktime(23, 59, 59, 11, 10, 2009);
+        if (!$this->assertEqual($node->created, $created, t('Validate third node created'))) {
+          $this->error('Expected: ' . $created);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        $changed = mktime(12, 38, 10, 11, 11, 2009);
+        if (!$this->assertEqual($node->changed, $changed, t('Validate third node changed'))) {
+          $this->error('Expected: ' . $changed);
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->status, 1, t('Validate third node status'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->moderate, 0, t('Validate third node moderate'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->promote, 0, t('Validate third node promote'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->sticky, 1, t('Validate third node sticky'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->language, 'en', t('Validate third node language'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->format, 1, t('Validate third node format'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+
+        // Test updating of the content set
+        $sql = "UPDATE {" . $tablename . "}
+                SET title='%s', body='%s', authorname='%s', changedon='%s'
+                WHERE id=%d";
+        db_query($sql, 'New title 1', 'This was a body', $user2->name,
+                 '2009-11-02 18:01:23', 893);
+        $sql = "UPDATE {" . $tablename . "}
+                SET authoruid='%d', authoredon=%d, published=%d, moderate=%d
+                WHERE id=%d";
+        db_query($sql, $user1->uid, mktime(2, 3, 4, 11, 13, 2009), 1, 1, 1027);
+        $sql = "UPDATE {" . $tablename . "}
+                SET promote=%d, sticky=%d, createrev=%d, language='%s', format=%d
+                WHERE id=%d";
+        db_query($sql, 1, 0, 0, 'fr', 2, 653223);
+
+        migrate_content_set_update($mcsid);
+        $edit = array("importing[$mcsid]" => $mcsid, 'update' => 1);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
+          $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+              $this->content, $matches);
+          $this->error('Actual messages: ' . $matches[1]);
+          return;
+        }
+        else {
+          $node = node_load(array('title' => 'New title 1'));
+          $this->assertEqual($node->nid, $nid1, 'Node updated, not inserted');
+          if (!$this->assertEqual($node->body, 'This was a body', t('Validate first node body'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->uid, $user2->uid, t('Validate first node author'))) {
+            $this->error('user2 uid=' . $user2->uid);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $created = mktime(13, 28, 51, 10, 15, 2009);
+          if (!$this->assertEqual($node->created, $created, t('Validate first node created'))) {
+            $this->error('Expected: ' . $created);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $changed = mktime(18, 01, 23, 11, 02, 2009);
+          if (!$this->assertEqual($node->changed, $changed, t('Validate first node changed'))) {
+            $this->error('Expected: ' . $changed);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->status, 1, t('Validate first node status'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->moderate, 1, t('Validate first node moderate'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->promote, 1, t('Validate first node promote'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->sticky, 1, t('Validate first node sticky'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->language, 'en', t('Validate first node language'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->format, 1, t('Validate first node format'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+
+          $node = node_load(array('title' => 'Title 2'));
+          if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node body'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->uid, $user1->uid, t('Validate second node author'))) {
+            $this->error('user1 uid=' . $user1->uid);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $created = mktime(2, 3, 4, 11, 13, 2009);
+          if (!$this->assertEqual($node->created, $created, t('Validate second node created'))) {
+            $this->error('Expected: ' . $created);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $changed = mktime(0, 0, 0, 10, 29, 2009);
+          if (!$this->assertEqual($node->changed, $changed, t('Validate second node changed'))) {
+            $this->error('Expected: ' . $changed);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->status, 1, t('Validate second node status'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->moderate, 1, t('Validate second node moderate'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->promote, 0, t('Validate second node promote'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->sticky, 0, t('Validate second node sticky'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->language, 'fr', t('Validate second node language'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->format, 2, t('Validate second node format'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+
+          $node = node_load(array('title' => 'Title 3'));
+          if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node body'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->uid, $user2->uid, t('Validate third node author'))) {
+            $this->error('user2 uid=' . $user2->uid);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $created = mktime(23, 59, 59, 11, 10, 2009);
+          if (!$this->assertEqual($node->created, $created, t('Validate third node created'))) {
+            $this->error('Expected: ' . $created);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          $changed = mktime(12, 38, 10, 11, 11, 2009);
+          if (!$this->assertEqual($node->changed, $changed, t('Validate third node changed'))) {
+            $this->error('Expected: ' . $changed);
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->status, 1, t('Validate third node status'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->moderate, 0, t('Validate third node moderate'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->promote, 1, t('Validate third node promote'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->sticky, 0, t('Validate third node sticky'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->language, 'fr', t('Validate third node language'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->format, 2, t('Validate third node format'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+        }
+
+        // Test an update content set
+        db_query('TRUNCATE TABLE {' . $tablename . '}');
+        $sql = 'INSERT INTO {' . $tablename . "}
+                (id, title)
+                VALUES(%d, '%s')";
+        db_query($sql, $nid1, 'Updated title 1');
+        db_query($sql, $nid2, 'Updated title 2');
+        db_query($sql, $nid3, 'Updated title 3');
+        $upd_content_set = new stdClass;
+        $upd_content_set->machine_name = 'node_update_test';
+        $upd_content_set->description = 'Node update test';
+        $upd_content_set->contenttype = 'node';
+        $upd_content_set->desttype = 'page';
+        $upd_content_set->view_name = $tablename;
+        $upd_content_set->sourcekey = 'id';
+        $upd_content_set->weight = 3;
+        $upd_mcsid = migrate_save_content_set($upd_content_set, array('base_table' => $tablename));
+        cache_clear_all('schema', 'cache');
+        if ($this->assertNotNull($upd_mcsid, t('Create update content set'))) {
+          // Add mappings to content set
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = 'id';
+          $edit->destfield = 'nid';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = $tablename . '_title';
+          $edit->destfield = 'title';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = array("importing[$upd_mcsid]" => $upd_mcsid);
+          $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+          if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
+            $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                $this->content, $matches);
+            $this->error('Actual messages: ' . $matches[1]);
+            return;
+          }
+          else {
+            $node = node_load(array('title' => 'Updated title 1'));
+            $this->assertEqual($node->nid, $nid1, 'Node updated, not inserted');
+            global $dump;
+            $dump = TRUE;
+/*            if (!$this->assertEqual($node->body, 'This was a body', t('Validate first node body'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }*/
+            $dump = FALSE;
+            if (!$this->assertEqual($node->uid, $user2->uid, t('Validate first node author'))) {
+              $this->error('user2 uid=' . $user2->uid);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $created = mktime(13, 28, 51, 10, 15, 2009);
+            if (!$this->assertEqual($node->created, $created, t('Validate first node created'))) {
+              $this->error('Expected: ' . $created);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $changed = mktime(18, 01, 23, 11, 02, 2009);
+            if (!$this->assertEqual($node->changed, $changed, t('Validate first node changed'))) {
+              $this->error('Expected: ' . $changed);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->status, 1, t('Validate first node status'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->moderate, 1, t('Validate first node moderate'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->promote, 1, t('Validate first node promote'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->sticky, 1, t('Validate first node sticky'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->language, 'en', t('Validate first node language'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->format, 1, t('Validate first node format'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+
+            $node = node_load(array('title' => 'Updated title 2'));
+/*            if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node body'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }*/
+            if (!$this->assertEqual($node->uid, $user1->uid, t('Validate second node author'))) {
+              $this->error('user1 uid=' . $user1->uid);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $created = mktime(2, 3, 4, 11, 13, 2009);
+            if (!$this->assertEqual($node->created, $created, t('Validate second node created'))) {
+              $this->error('Expected: ' . $created);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $changed = mktime(0, 0, 0, 10, 29, 2009);
+            if (!$this->assertEqual($node->changed, $changed, t('Validate second node changed'))) {
+              $this->error('Expected: ' . $changed);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->status, 1, t('Validate second node status'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->moderate, 1, t('Validate second node moderate'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->promote, 0, t('Validate second node promote'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->sticky, 0, t('Validate second node sticky'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->language, 'fr', t('Validate second node language'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->format, 2, t('Validate second node format'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+
+            $node = node_load(array('title' => 'Updated title 3'));
+/*            if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node body'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }*/
+            if (!$this->assertEqual($node->uid, $user2->uid, t('Validate third node author'))) {
+              $this->error('user2 uid=' . $user2->uid);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $created = mktime(23, 59, 59, 11, 10, 2009);
+            if (!$this->assertEqual($node->created, $created, t('Validate third node created'))) {
+              $this->error('Expected: ' . $created);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            $changed = mktime(12, 38, 10, 11, 11, 2009);
+            if (!$this->assertEqual($node->changed, $changed, t('Validate third node changed'))) {
+              $this->error('Expected: ' . $changed);
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->status, 1, t('Validate third node status'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->moderate, 0, t('Validate third node moderate'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->promote, 1, t('Validate third node promote'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->sticky, 0, t('Validate third node sticky'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->language, 'fr', t('Validate third node language'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+            if (!$this->assertEqual($node->format, 2, t('Validate third node format'))) {
+              $this->error('Actual node: ' . print_r($node, TRUE));
+            }
+          }
+        }
+
+        // Test clearing of the content set
+        $edit = array("clearing[$mcsid]" => $mcsid);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText(t('Deleted 3 in'), t('Clearing completed successfully'))) {
+          $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+              $this->content, $matches);
+          $this->error('Actual messages: ' . $matches[1]);
+          return;
+        }
+        else {
+          $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE type='page'"));
+          if (!$this->assertEqual($count, 0, t('All page nodes cleared'))) {
+            $this->error(t('!count page nodes exist', array('!count' => $count)));
+          }
+          $maptable = migrate_map_table_name($mcsid);
+          $count = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+          $this->assertEqual($count, 0, t('Map table cleared'));
+        }
+      }
+    }
+  }
+}

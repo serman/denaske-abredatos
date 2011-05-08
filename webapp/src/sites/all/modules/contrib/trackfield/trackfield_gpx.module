@@ -1,0 +1,62 @@
+<?php
+
+/*
+ * Types of input we understand.
+ */
+
+DEFINE('DATASET_GPX', 'gpx');
+
+function trackfield_gpx_trackfield_valuetypes() {
+  return array(
+    DATASET_GPX => t('GPX'),
+  );
+}
+
+function _trackfield_gpx_setcsv(&$item) {
+  $new_value = FALSE;
+  $doc = new DomDocument;
+  if ($doc->loadXML($item['value'])) {
+    $course = $doc->getElementsByTagName('trk');
+    if ($course->length) {
+      $pointname = 'trkpt';
+      $point_list = $course->item(0)->getElementsByTagName($pointname);
+      $point = $point_list->item(0);
+      while ($point) {
+        $lat = trim($point->getAttributeNode('lat')->value);
+        $lon = trim($point->getAttributeNode('lon')->value);
+        $alt = trim($point->getElementsByTagName('ele')->item(0)->nodeValue);
+        if (isset($csv)) { $csv .= ' '; }
+        $csv .= "$lon,$lat,$alt";
+
+        /* Move to next point of interest in the list */
+        do {
+          $point = $point->nextSibling;
+        } while ($point && $point->nodeName != $pointname);
+      }
+      $new_value = $csv;
+      $item['valuetype'] = DATASET_LONLATALT;
+    }
+  }
+  $item['value'] = $new_value;
+}
+
+function trackfield_gpx_trackfield_validate($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_gpx_trackfield_valuetypes())) { return; }
+
+  _trackfield_gpx_setcsv($item);
+  if (!$item['value']) {
+    return t('Invalid gpx or no paths found in gpx.');
+  }
+  return trackfield_csv_trackfield_validate($item, $node);
+}
+
+function trackfield_gpx_trackfield_submit($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_gpx_trackfield_valuetypes())) { return; }
+
+  _trackfield_gpx_setcsv($item);
+  return trackfield_csv_trackfield_submit($item, $node);
+}
+
+?>

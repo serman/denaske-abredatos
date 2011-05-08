@@ -1,0 +1,51 @@
+<?php
+
+/*
+ * Types of input we understand.
+ */
+
+DEFINE('DATASET_KML', 'kml');
+
+function trackfield_kml_trackfield_valuetypes() {
+  return array(
+    DATASET_KML => t('KML'),
+  );
+}
+
+function _trackfield_kml_setcsv(&$item) {
+  $new_value = FALSE;
+  $doc = new DomDocument;
+  /* TODO: Check for KML compressed data (zip file containing doc.kml) */
+  if ($doc->loadXML($item['value'])) {
+    $ls = $doc->getElementsByTagName('LineString');
+    if ($ls->length) {
+      $co = $ls->item(0)->getElementsByTagName('coordinates');
+      if ($co->length) {
+        $new_value = trim($co->item(0)->nodeValue);
+        $item['valuetype'] = DATASET_LONLATALT;
+      }
+    }
+  }
+  $item['value'] = $new_value;
+}
+
+function trackfield_kml_trackfield_validate($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_kml_trackfield_valuetypes())) { return; }
+
+  _trackfield_kml_setcsv($item);
+  if (!$item['value']) {
+    return t('Invalid KML or no paths found in KML.');
+  }
+  return trackfield_csv_trackfield_validate($item, $node);
+}
+
+function trackfield_kml_trackfield_submit($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_kml_trackfield_valuetypes())) { return; }
+
+  _trackfield_kml_setcsv($item);
+  return trackfield_csv_trackfield_submit($item, $node);
+}
+
+?>

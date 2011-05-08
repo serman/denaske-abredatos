@@ -1,0 +1,66 @@
+<?php
+
+/*
+ * Hook nodeapi.
+ */
+ 
+function trackfield_kml_out_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  switch($op) {
+    case 'kml item':
+       return _trackfield_kml_out_format_linestring($node);
+      break;
+  }
+}
+
+function trackfield_kml_out_kml_feed_extras($node_array) {
+  /* TODO: Configurable styles, inc style per category */
+  foreach ($node_array as $node) {
+    if (!array_key_exists($node->type, $out)) {
+      $out[$node->type] =
+        '<Style id="PlacemarkLinestring_' . $node->type . '">' . "\n" .
+        '  <LineStyle>' . "\n" .
+        '    <color>7f00ff00</color>' . "\n" .
+        '    <width>4</width>' . "\n" .
+        '  </LineStyle>' . "\n" .
+        '</Style>' . "\n";
+    }
+  }
+  return join("\n", $out);
+}
+ 
+function _trackfield_kml_out_format_linestring($node) {
+  foreach (_trackfield_fields() as $field_name) {
+    if ($node->$field_name) {
+      $field = $node->$field_name;
+      $coords = '';
+      
+      $delta = 0; /* TODO: multiple deltas */
+      $result = db_query("SELECT settype, setdata from {trackfield_datasets} WHERE vid = %d and field_name = '%s' and delta = %d and settype in ('latitude', 'longitude', 'altitude')", $node->vid, $field_name, $delta);
+      while ($sd = db_fetch_object($result)) {
+        $field[$sd->settype] = split(',', $sd->setdata);
+      }
+
+      if (array_key_exists('latitude', $field) && array_key_exists('longitude', $field)) {
+        for ($lp = 0; $lp < count($field['latitude']); $lp++) {
+          if ($lp) { $coords .= ' '; }
+          // TODO: altitude
+          $coords .= $field['longitude'][$lp] . ',' . $field['latitude'][$lp] . ',0';
+        }
+      }
+      
+      if ($coords) {
+        if ($multigeometry) {
+          $output['LineString'] = "<coordinates>$coords</coordinates>";
+        } else {
+          $output['Placemark'] =
+            "<name>$node->title</name>\n" .
+            "<styleUrl>#PlacemarkLinestring_$node->type</styleUrl>\n" .
+            "<LineString><coordinates>$coords</coordinates></LineString>";
+        }
+      }
+    }
+  }
+  return $output;
+}
+
+

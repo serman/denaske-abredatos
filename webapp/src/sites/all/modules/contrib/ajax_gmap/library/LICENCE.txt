@@ -1,0 +1,32 @@
+SOFTWARE LICENSE AGREEMENT
+
+NOTICE
+This is a legal agreement between You and Drupella.com.
+YOU MUST READ AND AGREE TO THE TERMS OF THIS SOFTWARE LICENSE AGREEMENT BEFORE YOU INSTALL OR USE THE SOFTWARE. BY DOWNLOADING, OR INSTALLING, OR USING THE SOFTWARE YOU ARE AGREEING TO BE BOUND BY THE TERMS AND CONDITIONS OF THIS SOFTWARE LICENSE AGREEMENT. IF YOU DO NOT AGREE WITH THE TERMS AND CONDITIONS OF THIS SOFTWARE LICENSE AGREEMENT, YOU SHOULD NOT DOWNLOAD OR INSTALL OR USE THE SOFTWARE. BY DOING SO, YOU FOREGO ANY IMPLIED OR STATED RIGHTS TO DOWNLOAD OR INSTALL OR USE THE SOFTWARE. IF YOU ARE AGREEING TO THIS LICENSE ON BEHALF OF A COMPANY, YOU REPRESENT THAT YOU ARE AUTHORIZED TO BIND THE COMPANY TO THIS AGREEMENT SOFTWARE LICENSE AGREEMENT.
+
+DEFINITIONS
+For the purpose of this Agreement, the following terms shall have the following meanings:
+ - "the Software" means the computer software programs in source code form that implement interfaces, and associated documentation, that are included in any source code files that may be downloaded from the drupella.com web site.
+ - "You(r)" means the company, entity or individual who agrees to this Software License Agreement, or on whose behalf such agreement is made.
+ - "Drupella.com Copyrights" means Drupella.com's copyrights in and to the Software.
+
+LICENSE
+1. Drupella.com grants You a limited, non-exclusive, non-transferable license, under Drupella.com Copyrights, to download, install and use the Software and any revisions thereto made available by Drupella.com according to the terms set forth below.
+2. You shall not duplicate, reproduce, license or sublicense the Software, or transfer or convey the Software or any right in the Software to anyone else without the prior written consent of Drupella.com; provided that You may make one copy of the Software for backup or archival purposes.
+
+TERMINATION
+This license will continue until terminated. Unauthorized use, reproduction or distribution of the Software or any other failure to comply with the above terms will result in automatic termination of this Agreement and will make available to Drupella.com other legal remedies. Upon termination of this license for any reason You will destroy all copies of the Software and all derivative works thereof. Any use of the Software or derivative works thereof after termination is unlawful.
+
+WARRANTY DISCLAIMER
+The Software is provided on an "AS IS" basis.
+Drupella.com warrants that the Software shall perform properly when used with the dependent software and appropriate computer equipment.
+Drupella.com does not warrant that the Software will 
+(i) comply in all respects with published protocol descriptions,
+(ii) be error free or
+(iii) meet Your specific requirements
+
+LIMITATION OF LIABILITY
+Limitation of liability in no event will drupella.com be liable for any damages, including but not limited to loss of or corruption to data, lost profits, loss of contracts, cost of procurement of substitute products or any other direct, special, incidental, punitive, consequential or indirect damages, losses, costs or expenses of any kind arising from the supply or use of the software, however caused and on any theory of liability (including without limitation negligence).
+
+LANGUAGE
+The parties hereto confirm that it is their wish that this Agreement, as well as other documents relating hereto, have been and shall be written in the English language only.

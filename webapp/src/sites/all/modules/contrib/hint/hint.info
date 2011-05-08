@@ -1,0 +1,12 @@
+; $Id: hint.info,v 1.2 2009/12/20 02:02:59 quicksketch Exp $
+name = Hint
+description = Provides an API for JavaScript "hint" text on text fields.
+package = User interface
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-12-20
+version = "6.x-1.2"
+core = "6.x"
+project = "hint"
+datestamp = "1261275334"
+

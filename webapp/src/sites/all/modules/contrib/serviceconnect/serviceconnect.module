@@ -1,0 +1,687 @@
+<?php
+
+define('SERVICECONNECT_PATH_ADMIN', 'admin/settings/serviceconnect');
+define('SERVICECONNECT_PATH_ADMIN_SETTINGS', 'admin/settings/serviceconnect/settings');
+define('SERVICECONNECT_PATH_ADMIN_STATISTICS', 'admin/settings/serviceconnect/stats');
+define('SERVICECONNECT_PATH_MANAGE_SERVICES', 'user/%user/services');
+define('SERVICECONNECT_PATH_UNLINK_SERVICE', 'user/%user/services/unlink/%');
+
+define('SERVICECONNECT_PERM_ADMINISTER', 'administer serviceconnect');
+define('SERVICECONNECT_PERM_MANAGE_OWN_SERVICES', 'manage own linked services');
+define('SERVICECONNECT_PERM_MANAGE_ALL_SERVICES', 'manage all linked services');
+
+define('SERVICECONNECT_VAR_REDIRECT_AFTER_FIRST_USE', 'serviceconnect_redirect_after_first_use');
+define('SERVICECONNECT_VAR_REDIRECT_AFTER_FIRST_USE_DEFAULT', TRUE);
+
+define('SERVICECONNECT_VAR_COLLECT_STATISTICS', 'serviceconnect_collect_statistics');
+define('SERVICECONNECT_VAR_COLLECT_STATISTICS_DEFAULT', TRUE);
+
+/**
+ * Implementation of hook_perm().
+ */
+function serviceconnect_perm() {
+  return array(
+    SERVICECONNECT_PERM_ADMINISTER,
+    SERVICECONNECT_PERM_MANAGE_OWN_SERVICES,
+    SERVICECONNECT_PERM_MANAGE_ALL_SERVICES,
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function serviceconnect_menu() {
+  $menu = array();
+  
+  $menu[SERVICECONNECT_PATH_ADMIN] = array(
+    'title' => 'ServiceConnect',
+    'description' => 'Change ServiceConnect settings used to login with external services.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'serviceconnect.admin.inc',
+  );
+  
+  $menu[SERVICECONNECT_PATH_ADMIN_SETTINGS] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_settings_form'),
+    'access arguments' => array(SERVICECONNECT_PERM_ADMINISTER),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'serviceconnect.admin.inc',
+    'weight' => -100,
+  );
+  
+  $menu[SERVICECONNECT_PATH_ADMIN_STATISTICS] = array(
+    'title' => 'Statistics',
+    'page callback' => 'serviceconnect_statistics_page',
+    'access callback' => 'serviceconnect_may_view_statistics',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'serviceconnect.admin.inc',
+    'weight' => -99,
+  );
+  
+  $menu[SERVICECONNECT_PATH_MANAGE_SERVICES] = array(
+    'title' => t('External logins'),
+    'page callback' => 'serviceconnect_manage_linked_services_page',
+    'page arguments' => array(1),
+    'access callback' => 'serviceconnect_may_manage_services',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'serviceconnect.pages.inc',
+  );
+  
+  $menu[SERVICECONNECT_PATH_UNLINK_SERVICE] = array(
+    'title' => t('Unlink service'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('serviceconnect_unlink_service_form', 1, 4),
+    'access callback' => 'serviceconnect_may_manage_services',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'serviceconnect.pages.inc',
+  );
+  
+  return $menu;
+}
+
+/**
+ * Menu access callback
+ */
+function serviceconnect_may_view_statistics() {
+  if (!user_access(SERVICECONNECT_PERM_ADMINISTER)) {
+    return FALSE;
+  }
+  if (!variable_get(SERVICECONNECT_VAR_COLLECT_STATISTICS, SERVICECONNECT_VAR_COLLECT_STATISTICS_DEFAULT)) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Menu access callback
+ */
+function serviceconnect_may_manage_services($account) {
+  global $user;
+  if (user_access(SERVICECONNECT_PERM_MANAGE_ALL_SERVICES)) {
+    return TRUE;
+  }
+  if (user_access(SERVICECONNECT_PERM_MANAGE_OWN_SERVICES) && $user->uid == $account->uid) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Get Drupal uid by service / service user id combination
+ *
+ * @param string $service
+ * @param string $service_uid
+ * @return object containing scpid and uid
+ */
+function serviceconnect_get_uid_by_service_uid($service, $service_uid) {
+  $sql = 'SELECT su.scpid, su.uid
+  FROM {serviceconnect_user} su
+  WHERE su.service = \'%s\'
+  AND su.service_uid = \'%s\' LIMIT 1';
+  $res = db_query($sql, $service, $service_uid);
+  return db_fetch_object($res);
+}
+
+/**
+ * Create a new Drupal account for the given external service
+ *
+ * @param string $service
+ * @param string $service_uid
+ * @param array $preferred_usernames
+ * @return int Drupal user id
+ */
+function serviceconnect_login_with_new_user($service, $service_uid, $username, $email) {
+  global $user;
+
+  // Make sure there is a session, login will fail otherwise (required for Pressflow).
+  sess_regenerate();
+
+  // Pressflow will delete sessions which do not have any variables.
+  sess_write('serviceconnect', 'keep-session');
+
+  serviceconnect_increment_counter('new ' . $service . ' user');
+  
+  $userinfo = array(
+    'name' => $username,
+    'pass' => user_password(),
+    'mail' => $email,
+    'init' => $username,
+    'status' => 1,
+    "authname_$module" => $name,
+    'access' => time()
+  );
+  $account = user_save('', $userinfo);
+  // Terminate if an error occured during user_save().
+  if (!$account) {
+    throw new Exception('Unable to create new account');
+  }
+  $user = $account;
+  
+  return $user->uid;
+}
+
+/**
+ * Login with an existing user account.
+ *
+ * @param int $scpid
+ * @param int $uid
+ * @param int $expires
+ * @return bool
+ */
+function serviceconnect_login_with_existing_user($scpid, $uid, $expires) {
+  global $user;
+  
+  // Make sure there is a session, login will fail otherwise (required for Pressflow).
+  sess_regenerate();
+
+  // Pressflow will delete sessions which do not have any variables.
+  sess_write('serviceconnect', 'keep-session');
+
+  serviceconnect_increment_counter('login with existing user');
+  
+  // Update service profile statistics
+  $sql = 'UPDATE {serviceconnect_user} SET
+  login_attempts = login_attempts + 1,
+  second_last_login = last_login,
+  last_login = %d,
+  expires = %d
+  WHERE scpid = %d';
+  db_query($sql, time(), $expires, $scpid);
+  
+  $existing_user = user_load(array('uid' => $uid));
+  if (isset($existing_user->uid)) {
+    $user = $existing_user;
+  }
+  else {
+    drupal_set_message(t('Unable to login, user was not found'), 'error');
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Link external service with the logged in user account.
+ *
+ * @param string $service
+ * @param string $service_uid
+ * @param string $service_profile_url
+ * @param string $displayname
+ * @param int $expires
+ * @return int
+ */
+function serviceconnect_link_service($service, $service_uid, $service_profile_url, $displayname, $expires = NULL) {
+  global $user;
+  serviceconnect_increment_counter('linking user to ' . $service);
+  $_serviceconnect_user = new stdClass();
+  $_serviceconnect_user->uid = $user->uid;
+  $_serviceconnect_user->service = $service;
+  $_serviceconnect_user->service_uid = $service_uid;
+  $_serviceconnect_user->service_profile_url = $service_profile_url;
+  $_serviceconnect_user->displayname = $displayname;
+  $_serviceconnect_user->created = time();
+  if ($expires) {
+    $_serviceconnect_user->expires = $expires;
+  }
+  $_serviceconnect_user->last_login = time();
+  $_serviceconnect_user->login_attempts = 1;
+  drupal_write_record('serviceconnect_user', $_serviceconnect_user);
+  
+  return $_serviceconnect_user->scpid;
+}
+
+/**
+ * Download profilepicture, save as file and return the file object.
+ *
+ * @param string $url
+ * @param object $account
+ * @return object
+ */
+function serviceconnect_download_profilepicture($url, $account = NULL) {
+  if (!$account) {
+    global $user;
+    $account = $user;
+  }
+  
+  $ext = preg_match('/\\.([a-zA-Z]+)$/', $url, $match) ? $match[1] : 'dat';
+  $temp_dir = file_directory_temp();
+  if (!$picture = drupal_http_request($url)) {
+    return FALSE;
+  }
+  if ($picture->code != 200 && $picture->code != 302) {
+    return FALSE;
+  }
+  $orig_filename = md5(microtime() . rand(0, 1000)) . '.' . $ext;
+  $filename = $temp_dir . '/' . $orig_filename;
+  if (!$fp = fopen($filename, 'w')) {
+    return FALSE;
+  }
+  fwrite($fp, $picture->data);
+  fclose($fp);
+  if (!file_move($filename, variable_get('user_picture_path', 'pictures'))) {
+    @unlink($filename);
+    return FALSE;
+  }
+  $file = new stdClass();
+  $file->uid = $account->uid;
+  $file->filename = $orig_filename;
+  $file->filepath = $filename;
+  $file->status = 1;
+  $file->filesize = filesize($filename);
+  $file->filemime = file_get_mimetype($filename);
+  $file->list = 0;
+  drupal_write_record('files', $file);
+  return $file;
+}
+
+/**
+ * Perform actions after the first use of the external profile.
+ *
+ * @param string $service
+ * @return string
+ */
+function serviceconnect_first_use($service) {
+  global $user;
+  if (variable_get(SERVICECONNECT_VAR_REDIRECT_AFTER_FIRST_USE, SERVICECONNECT_VAR_REDIRECT_AFTER_FIRST_USE_DEFAULT)) {
+    return 'user/' . $user->uid . '/edit';
+  }
+}
+
+/**
+ * Get scpid for a given service / logged in user.
+ *
+ * @param string $service
+ * @return int
+ */
+function serviceconnect_get_scpid_by_service($service) {
+  global $user;
+  $sql = 'SELECT su.scpid
+  FROM {serviceconnect_user} su
+  WHERE su.uid = %d
+  AND su.service = \'%s\'
+  AND (su.expires IS NULL OR su.expires > %d)
+  ORDER BY su.last_login DESC
+  LIMIT 1';
+  $res = db_query($sql, $user->uid, $service, time());
+  return db_result($res);
+}
+
+/**
+ * Get profile url for a given service / logged in user.
+ *
+ * @param string $service
+ * @param int $uid
+ * @return string
+ */
+function serviceconnect_get_profile_url_for_service($service, $uid = NULL) {
+  global $user;
+  if (is_NULL($uid)) {
+    $uid = $user->uid;
+  }
+  $sql = 'SELECT su.service_profile_url
+  FROM {serviceconnect_user} su
+  WHERE su.uid = %d
+  AND su.service = \'%s\'
+  ORDER BY su.last_login DESC
+  LIMIT 1';
+  $res = db_query($sql, $uid, $service);
+  return db_result($res);
+}
+
+/**
+ * Import user relationships from external service
+ *
+ * @param string $service External service name
+ * @param array $service_uids Array with service user id's
+ * @param int $rtid Relationship Type id from user_relationships module
+ * @return int Number of relations found
+ */
+function serviceconnect_import_user_relationships($service, $service_uids, $rtid) {
+  global $user;
+  if (!module_exists('user_relationships_api')) {
+    return FALSE;
+  }
+  if (!$user->uid) {
+    return FALSE;
+  }
+  $import_limit = 1000;
+  $batch_size = 100;
+  $batches = array();
+  for ($i = 0; $i < min(count($service_uids), $import_limit); $i++) {
+    $batch = floor($i / $batch_size);
+    if (!isset($batches[$batch])) {
+      $batches[$batch] = array();
+    }
+    $batches[$batch][] = $service_uids[$i];
+  }
+  $relations = array();
+  foreach ($batches as $batch) {
+    $sql = 'SELECT uid
+    FROM {serviceconnect_user}
+    WHERE service = \'%s\'
+    AND service_uid IN (' . implode(',', array_pad(array(), count($batch), '\'%s\'')) . ')';
+    array_unshift($batch, $service);
+    $res = db_query($sql, $batch);
+    while ($rec = db_fetch_array($res)) {
+      $relations[] = $rec['uid'];
+    }
+  }
+  module_load_include('inc', 'user_relationships_api', 'user_relationships_api.api');
+  foreach ($relations as $relation) {
+    user_relationships_request_relationship($user->uid, $relation, $rtid, TRUE);
+  }
+  return count($relations);
+}
+
+/**
+ * Get a list of available profilefields.
+ *
+ * @param string $type 'all', 'integer', 'text', 'link' or 'file'
+ * @return <type>
+ */
+function serviceconnect_get_profile_fields($type = 'all', $include_none = TRUE) {
+  $options = array();
+  switch ($type) {
+    case 'all':
+      $include_profile = TRUE;
+      $select_types = array('text', 'filefield', 'link', 'number_integer');
+      break;
+    case 'integer':
+      $include_profile = TRUE;
+      $select_types = array('text', 'number_integer');
+      break;
+    case 'text':
+      $include_profile = TRUE;
+      $select_types = array('text');
+      break;
+    case 'link':
+      $include_profile = TRUE;
+      $select_types = array('text', 'link');
+      break;
+    case 'file':
+      $include_profile = FALSE;
+      $select_types = array('filefield');
+      break;
+    case 'date':
+      $include_profile = TRUE;
+      $select_types = array('date');
+      break;
+  }
+  if ($type == 'all' || $type == 'file') {
+    $options['avatar'] = t('Avatar');
+  }
+  if ($include_profile && module_exists('profile')) {
+    $sql = 'SELECT pf.fid, pf.title
+    FROM {profile_fields} pf';
+    $res = db_query($sql);
+    while ($rec = db_fetch_array($res)) {
+      $options[$rec['fid']] = $rec['title'];
+    }
+  }
+  if (module_exists('content_profile')) {
+    $types = content_profile_get_types('names');
+    $types = array_keys($types);
+    if ($types) {
+      if ($type == 'all' || $type == 'text') {
+        foreach ($types as $type) {
+          $key = "$type.title";
+          $label = $key;
+          $options[$key] = $label;
+          $key = "$type.body";
+          $label = $key;
+          $options[$key] = $label;
+        }
+      }
+      $sql = 'SELECT cnfi.type_name, cnfi.field_name, cnf.module
+      FROM {content_node_field_instance} cnfi
+      JOIN {content_node_field} cnf ON cnfi.field_name = cnf.field_name
+      WHERE cnfi.type_name IN (' . db_placeholders($types, 'varchar') . ')
+      AND cnf.type IN (' . db_placeholders($select_types, 'varchar') . ')';
+      $args = array_merge($types, $select_types);
+      $res = db_query($sql, $args);
+      while ($rec = db_fetch_array($res)) {
+        $key = $rec['type_name'] . '.' . $rec['field_name'];
+        $label = "$key (" . $rec['module'] . ')';
+        $options[$key] = $label;
+      }
+    }
+  }
+  ksort($options);
+  if ($include_none) {
+    return array('' => t('Do not synchronize')) + $options;
+  }
+  else {
+    return $options;
+  }
+}
+
+/**
+ * Save profile information in the user profile for the currently logged in user.
+ *
+ * @param array $fields
+ */
+function serviceconnect_save_profile($fields) {
+  global $user;
+  $content_profiles = array();
+  foreach ($fields as $field => $value) {
+    if ($field == 'avatar') {
+      if ($file = serviceconnect_download_profilepicture($value)) {
+        $sql = 'UPDATE {users} SET picture = \'%s\' WHERE uid = %d';
+        db_query($sql, $file->filepath, $user->uid);
+      }
+    }
+    elseif (is_numeric($field) && module_exists('profile')) {
+      $sql = 'INSERT INTO {profile_values}
+      (fid, uid, value) VALUES (%d, %d, \'%s\')
+      ON DUPLICATE KEY UPDATE value = \'%s\'';
+      db_query($sql, $fid, $user->uid, $value, $value);
+    }
+    elseif (preg_match('/^([^\\.]+)\\.([^\\.]+)$/', $field, $match) && module_exists('content_profile')) {
+      $typename = $match[1];
+      $fieldname = $match[2];
+      if (!isset($content_profiles[$typename])) {
+        if (!$content_profiles[$typename] = content_profile_load($typename, $user->uid)) {
+          $content_profiles[$typename] = new stdClass();
+          $content_profiles[$typename]->type = $typename;
+          $content_profiles[$typename]->uid = $user->uid;
+          node_submit($content_profiles[$typename]);
+        }
+      }
+      if ($fieldname == 'title' || $fieldname == 'body') {
+        $content_profiles[$typename]->$fieldname = $value;
+      }
+      else {
+        // Handle CCK fields.
+        $sql = 'SELECT type FROM {content_node_field} WHERE field_name = \'%s\'';
+        $res = db_query($sql, $fieldname);
+        switch (db_result($res)) {
+          case 'text':
+            $content_profiles[$typename]->$fieldname = array(0 => array('value' => $value));
+            break;
+          case 'number_integer':
+            $content_profiles[$typename]->$fieldname = array(0 => array('value' => $value));
+            break;
+          case 'date':
+            if (preg_match('/^a\\:3\\:/si', $value)) {
+              $value = unserialize($value);
+            }
+            if (is_array($value)) {
+              $year = str_pad($value['year'], 4, '0', STR_PAD_LEFT);
+              $month = str_pad($value['month'], 2, '0', STR_PAD_LEFT);
+              $day = str_pad($value['day'], 2, '0', STR_PAD_LEFT);
+              $date = "$year-$month-{$day}T00:00:00";
+              $content_profiles[$typename]->$fieldname = array(0 => array(
+                'value' => $date,
+                'value2' => $date,
+                'timezone' => $user->timezone_name,
+                'timezone_db' => $user->timezone_name,
+                'date_type' => 'date',
+              ));
+            }
+            break;
+          case 'link':
+            $content_profiles[$typename]->$fieldname = array(0 => array(
+              'url' => $value,
+              'title' => preg_replace('/^[a-z]+\\:\\/\\/(www\\.)?/si', '', $value),
+              'attributes' => array(),
+            ));
+            break;
+          case 'filefield':
+            if ($file = serviceconnect_download_profilepicture($value)) {
+              $content_profiles[$typename]->$fieldname = array(0 => (array) $file);
+            }
+            break;
+        }
+      }
+    }
+  }
+  foreach ($content_profiles as $content_profile) {
+    node_save($content_profile);
+  }
+}
+
+/**
+ * Clear all user data which was fetched from the external service
+ *
+ * @param int $scpid
+ */
+function serviceconnect_clear_user_data($scpid) {
+  $sql = 'SELECT uid FROM {serviceconnect_user} WHERE scpid = %d';
+  $res = db_query($sql, $scpid);
+  if ($uid = db_result($res)) {
+    $sql = 'DELETE FROM {profile_values} WHERE uid = %d';
+    db_query($sql, $uid);
+    $sql = 'UPDATE {users} SET picture = \'\' WHERE uid = %d';
+    db_query($sql, $uid);
+  }
+  $sql = 'DELETE FROM {serviceconnect_user} WHERE scpid = %d';
+  db_query($sql, $scpid);
+  serviceconnect_increment_counter('clearing user data');
+}
+
+/**
+ * Increment a statistics counter.
+ *
+ * @param string $name
+ */
+function serviceconnect_increment_counter($name) {
+  if (!variable_get(SERVICECONNECT_VAR_COLLECT_STATISTICS, SERVICECONNECT_VAR_COLLECT_STATISTICS_DEFAULT)) {
+    return;
+  }
+  $sql = 'INSERT INTO {serviceconnect_counter}
+  (name, count)
+  VALUES
+  (\'%s\', 1)
+  ON DUPLICATE KEY UPDATE count = count + 1';
+  db_query($sql, $name);
+}
+
+/**
+ * Register with your external profile form.
+ *
+ * @param array $form_state
+ * @param string $module
+ * @param string $token
+ * @param string $name
+ * @param string $terms_and_conditions
+ * @param string $service_name
+ * @return array
+ */
+function serviceconnect_register_form(&$form_state, $module, $token, $name, $terms_and_conditions = NULL, $service_name = 'serviceconnect') {
+  $form = array();
+
+  $form['#module'] = $module;
+  $form['#oauth_token'] = $token;
+  $form['#name'] = $name;
+  $form['#has_terms'] = !empty($terms_and_conditions);
+
+  $form['title'] = array(
+    '#value' => '<h1>' . t('Registreer met uw @service profiel', array('@service' => $service_name)) . '</h1>',
+  );
+
+  $form['description'] = array(
+    '#value' => '<p>' . t('U moet een gebruikersnaam kiezen en uw email adres invullen om in te kunnen loggen via UW @service profiel.', array('@service' => $service_name)) . '</p>',
+  );
+
+  $form['username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username'),
+    '#required' => TRUE,
+    '#maxlength' => 60,
+  );
+
+  $form['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('E-mail'),
+    '#required' => TRUE,
+    '#maxlength' => 255,
+  );
+
+  if (!empty($terms_and_conditions)) {
+    $form['terms_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Terms and conditions'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+    );
+    $form['terms_container']['terms'] = array(
+      '#value' => nl2br(check_plain($terms_and_conditions)),
+      '#prefix' => '<div class="terms_and_conditions">',
+      '#suffix' => '</div>',
+    );
+    $form['terms_container']['accept_terms'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('I agree with the terms and conditions'),
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Register with your external profile form validate callback.
+ */
+function serviceconnect_register_form_validate($form, &$form_state) {
+  $username = $form_state['values']['username'];
+  $email = $form_state['values']['email'];
+  if (!valid_email_address($email)) {
+    form_set_error('email', t('You must fill in a valid e-mail address.'));
+  }
+
+  $sql = 'SELECT uid FROM {users} WHERE mail = \'%s\'';
+  $res = db_query($sql, $email);
+  if (db_fetch_array($res)) {
+    form_set_error('email', t('This e-mail address is already in use for another account.'));
+  }
+
+  $sql = 'SELECT uid FROM {users} WHERE name = \'%s\'';
+  $res = db_query($sql, $username);
+  if (db_fetch_array($res)) {
+    form_set_error('username', t('This username is already taken.'));
+  }
+
+  if ($form['#has_terms'] && empty($form_state['values']['accept_terms'])) {
+    form_set_error('accept_terms', t('You must accept the terms and conditions in order to continue.'));
+  }
+}
+
+/**
+ * Register with your external profile form submit callback.
+ */
+function serviceconnect_register_form_submit($form, &$form_state) {
+  $module = $form['#module'];
+  $token = $form['#oauth_token'];
+  $username = $form_state['values']['username'];
+  $email = $form_state['values']['email'];
+  call_user_func($module . '_register', $token, $username, $email);
+}

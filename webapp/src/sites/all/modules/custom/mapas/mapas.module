@@ -1,0 +1,516 @@
+<?php
+/**
+ * @file mapas.module
+ * TODO: Enter file description here.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function mapas_menu() { 
+  // This is the minimum information you can provide for a menu item.
+  $items['busca'] = array(
+    'title' => 'Donde vas a pasar tu día de campo ?',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('busca_principal'),
+    'access arguments' => array('access content'),
+  );
+/*  // more complex menu item
+  $items['TODO: Enter path'] = array(
+    'title' => 'TODO: Enter menu item title',
+    'description' => 'TODO: Enter description',
+    'page callback' => 'TODO: Enter callback function',
+    'page arguments' => '', // An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component.
+    'access callback' => '', // defaults to user_access()
+    'access arguments' => array('TODO: Enter user permissions'),
+    'weight' => 0,
+    'type' => MENU_NORMAL_ITEM, // One of MENU_NORMAL_ITEM / MENU_CALLBACK / MENU_SUGGESTED_ITEM / MENU_LOCAL_TASK / MENU_DEFAULT_LOCAL_TASK
+    'menu_name' => '', // Menu to place this item in.
+    'title callback' => '', // Function to generate the title, defaults to t(). 
+    'title arguments' => '', // Arguments to send to t() or your custom callback. 
+  );
+  // OPTIONAL: Fill in additional static menu items
+*/
+  return $items;
+}
+
+function busca_principal(){
+  $form['ciudad'] = array(
+    '#type' => 'textfield',
+    //'#title' => 'Introduce una ciudad',
+    '#hint' => 'Localización, codigo postal ...',
+    '#required' => TRUE,
+    '#size' => '40',
+  );
+
+  $form['distancia'] = array(
+    '#type' => 'textfield',
+    //'#title' => 'Introduce la distancia',
+    //'#default_value' => '100',
+    '#field_suffix' => 'KLM',
+    '#attributes' => array('class' => 'texto-entrada'),
+    '#hint' => 'Introduce una distancia aproximada',
+    '#required' => TRUE,
+    '#size' => '40',
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Buscar!'
+    );
+  
+  
+  //dpm($form);
+  return $form;
+}
+
+function busca_principal_submit($form, $form_state){
+  //dpm($form_state, 'submit');
+  $destino = $form_state['values']['ciudad'].'_'.$form_state['values']['distancia'];
+  drupal_goto("mapa_proximidad_home/".$destino);
+  
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function mapas_perm() {
+  return array('create Gestión con mapas', 'edit own Gestión con mapas');
+}
+
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function mapas_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  switch ($op) {
+    case 'alter':
+      // OPTIONAL: the $node->content array has been rendered, so the node body or
+      // teaser is filtered and now contains HTML. This op should only be used when
+      // text substitution, filtering, or other raw text operations are necessary.
+      break;
+    case 'delete':
+      // OPTIONAL: The node is being deleted.
+      break;
+    case 'delete revision':
+      // OPTIONAL: The revision of the node is deleted. You can delete data
+      // associated with that revision.
+      break;
+    case 'insert':
+      // OPTIONAL: The node is being created (inserted in the database).
+      break;
+    case 'load':
+      // OPTIONAL: The node is about to be loaded from the database. This hook
+      // can be used to load additional data at this time.
+      break;
+    case 'prepare':
+      // OPTIONAL: The node is about to be shown on the add/edit form.
+      break;
+    case 'prepare translation':
+      // OPTIONAL: The node is being cloned for translation. Load
+      // additional data or copy values from $node->translation_source.
+      break;
+    case 'print':
+      // OPTIONAL: Prepare a node view for printing. Used for printer-friendly
+      // view in book_module
+      break;
+    case 'rss item':
+      // OPTIONAL: An RSS feed is generated. The module can return properties
+      // to be added to the RSS item generated for this node. See comment_nodeapi()
+      // and upload_nodeapi() for examples. The $node passed can also be modified
+      // to add or remove contents to the feed item.
+      break;
+    case 'search result':
+      // OPTIONAL: The node is displayed as a search result. If you
+      // want to display extra information with the result, return it.
+      break;
+    case 'presave':
+      // OPTIONAL: The node passed validation and is about to be saved. Modules may
+      //  use this to make changes to the node before it is saved to the database.
+      break;
+    case 'update':
+      // OPTIONAL: The node is being updated.
+      break;
+    case 'update index':
+      // OPTIONAL: The node is being indexed. If you want additional
+      // information to be indexed which is not already visible through
+      // nodeapi "view", then you should return it here.
+      break;
+    case 'validate':
+      // OPTIONAL: The user has just finished editing the node and is
+      // trying to preview or submit it. This hook can be used to check
+      // the node data. Errors should be set with form_set_error().
+      break;
+    case 'view':
+      // OPTIONAL: The node content is being assembled before rendering. The module
+      // may add elements $node->content prior to rendering. This hook will be
+      // called after hook_view().  The format of $node->content is the same as
+      // used by Forms API.
+      
+      if ($node->type == 'espacio'){
+        
+        
+        
+        
+        //LLAMAMOS A LA VISTA QUE FILTRA LAS NOTAS Y DEVUELVE LA POSICIÓN EN GOOGLEMAP
+        //SE LE PASA POR ARGUMENTO EL NID (NODE REFERENCE)
+        //$view = views_get_view('notas_reference_position');
+        //Llamamos a la view con lo posición de los nodos
+        $view = views_get_view('notas_reference_espacio_point','default');
+        
+        //MODIFICAMOS LA VISTA PARA CAMBIAR EL DISPLAY POR DEFECTO 
+        //$view->display['default']->display_options['style_options']['macro'] = $macro_text;
+        $view->set_arguments( array( arg(1) ) );
+        //Renderizamos la vista con el display modificado        
+        //$mapa_notas = $view->render('default');
+         
+         
+            
+        $view->execute();
+        $resultado = $view->result;
+        dpm($resultado, 'resultado');
+        
+        if(is_array($resultado) && !empty($resultado)){
+        
+        foreach($resultado as $item){
+          
+          //$latitude = $item->location_latitude;
+          
+          //Si tiene una foto cargamos los datos
+          if($item->node_data_field_nota_node_nid_field_nota_fotos_fid != NULL){
+            
+            $file = field_file_load($item->node_data_field_nota_node_nid_field_nota_fotos_fid);
+            $imagen = theme_imagecache('crop_square_medium', $file['filepath'], $alt = '', $title = '', $attributes = NULL, $getsize = TRUE);
+          }
+          
+          $nodo_display = $item->term_data_1_name.'<br /><a href=/node/'.$item->nid.'>'.$item->node_title.'</a><br />'.$imagen;
+          
+          //Nota publica
+          if($item->term_data_1_tid == 1){
+            
+            $longitude1 .= $item->location_latitude.','.$item->location_longitude.':'.$nodo_display.' + ';
+            $color = 'red';
+            dpm($longitude1, 'entramos en pulica');
+          }
+          
+          //Denuncia
+          if($item->term_data_1_tid == 2){
+            
+            $longitude2 .= $item->location_latitude.','.$item->location_longitude.':'.$nodo_display.' + ';
+            $color= 'blue';
+          }
+          
+          //NOTA PRIVADA
+          if($item->term_data_1_tid == 3){
+            
+            $longitude3 .= $item->location_latitude.','.$item->location_longitude.':'.$nodo_display.' + ';
+            $color= 'green';
+          }
+          
+          
+          
+        }
+        
+        dpm($longitude1, 'longitude 1');
+        dpm($longitude2, 'longitude 2');
+        
+        $longitude = $longitude1.$longitude2.$longitude3;
+        
+        $mark_publica = " |markers=green::".$longitude1;
+        
+        $mark_denuncia = " |markers=lblue::".$longitude2;
+        
+        $mark_privada = " |markers=lblue::".$longitude3;
+        
+       dpm($longitude,'LONGITUDE SUMA');
+
+        
+        $longitude = substr_replace($longitude, '', -3 , strlen($longitude));
+        
+        
+        dpm($longitude,'TENEMOS NOTAS');
+        
+        }else{
+          dpm('no tenemos notas');
+          $longitude == FALSE;
+          
+        }
+        
+        
+        
+        //DEBUGGEAR CON NODE 38
+        //RECOGEMOS LAS CORDENADAS SUBIDAS AL NODO
+        $mapa = $node->field_espacio_area[0]['value'];
+        
+        //GUARDAMOS LA LATITUD Y LONGITUD
+        $lat = $node->location['latitude'];
+        $lon = $node->location['longitude'];
+        
+        dpm($lat, 'latitude');
+        dpm($lon, 'longitud');
+        
+        //dpm($node);
+        unset($via_verde);
+        foreach ($node->taxonomy as $item){
+          
+          if ($item->tid == 22){
+            $tipo = 'viaverde';
+            $color = 'blue';
+          }
+          
+          if ($item->tid == 12){
+            $tipo = 'playa';
+            
+          }
+          
+        }
+        
+        
+        switch ($tipo){
+          
+          case 'playa':
+            dpm('PLAYA');
+            $macro_text = "[gmap markers=treasure::".$lat.",".$lon.":".$node->title."|zoom=11 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+            break;
+          
+          case 'viaverde':
+            dpm('VIA VERDE');
+            $macro_text = "[gmap line=#FF2200/3/80/#ff2200/45:".$mapa." |markers=route::".$lat.",".$lon.":".$node->title."|zoom=11 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+            break;
+          
+          default:
+            dpm('DEFAULT');
+            
+          //comprobamos cuantos puntos tenemos  
+          if(!empty($longitude)){
+          dpm('Pintamos mapa con punto central y sus notas');
+        //Pintamos el mapa con sus puntos
+          //$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa."|markers=small red::".$lat.",".$lon.":".$node->title."|markers=small blue::".$longitude." |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        
+        $macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa."|markers=small red::".$lat.",".$lon.":".$node->title.$mark_denuncia.$mark_publica." |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        
+        } else {
+          dpm('Pintamos mapa con punto central');
+          //pintamos el mapa con un solo punto central
+        $macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa."|markers=small red::".$lat.",".$lon.":".$node->title."|zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+            
+            
+            
+          
+        }
+        break;
+        }//FIN SWITCH
+        
+        ////ES UNA VÍA VERDE
+        //if(isset($via_verde)){
+        //  
+        //  dpm($via_verde ,'via verde');
+        //  $macro_text = "[gmap line=#FF2200/3/80/#ff2200/45:".$mapa." |markers=route::".$lat.",".$lon.":".$node->title."|zoom=11 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        //  
+        //  //$macro_text = "[gmap line".$mapa." |markers=small red::".$lat.",".$lon." |zoom=13 |width=100% |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        //  
+        //  
+        //  
+        //  dpm($macro_text);
+        //  
+        //} else {
+        //  
+        //  //CONSTRUIMOS LA MACRO PARA SUSTITUIR EN LA VISTA
+        ////$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa.":caracola|markers=big blue::".$lat.",".$lon.":HOLA |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        //
+        //
+        //if(!empty($longitude)){
+        //  dpm('Pintamos mapa con punto central y sus notas');
+        ////Pintamos el mapa con sus puntos
+        //$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa."|markers=treasure::".$lat.",".$lon.":".$node->title."|markers=small blue::".$longitude." |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        //
+        //
+        //} else {
+        //  dpm('Pintamos mapa con punto central');
+        //  //pintamos el mapa con un solo punto central
+        //$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa."|markers=treasure::".$lat.",".$lon.":".$node->title."|zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        //
+        //}
+        //
+        
+        //posiciona pero pinta una marca en azul
+        //$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa.":caracola|markers=small blue::".$longitude." |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+          
+        //$macro_text = "[gmap polygon=#000000/3/25/#ff0000/45:".$mapa.":caracola|markers=small blue::".$lat.",".$lon." |zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+          
+        //}
+       
+        //$macro_text = "[gmap polygon=".$mapa."|zoom=10 |width=960px |height=500px |center=".$lat.",".$lon." |control=Small |type=Map]";
+        
+        
+        dpm($macro_text,'VISTA');
+        
+     //   $name = 'notas_reference_espacio_point';
+     //
+     //dpm(views_get_view_result2($mame, 'default'),'veamos');
+        
+        
+        //GENERAMOS EL MAPA CON UNA FUNCIÓN DE TEMATIZACIÓN
+        
+        $map_array = gmap_parse_macro($macro_text);
+        $salida1 = theme('gmap', array('#settings' => $map_array));
+
+        $node->content['mapas'] = array(
+          '#value' => $salida1,
+        );
+        
+
+
+        /*$view = views_get_view('android_map','default');
+        dpm($view, 'vieeees');
+        //MODIFICAMOS LA VISTA PARA CAMBIAR EL DISPLAY POR DEFECTO 
+        //$view->display['default']->display_options['style_options']['macro'] = $macro_text;
+        //$view->set_arguments( array( arg(1) ) );
+        //Renderizamos la vista con el display modificado        
+        //$mapa_notas = $view->render('default');
+         
+         
+            
+        $view->execute();
+        $resultado5 = $view->result;
+        dpm($resultado5, 'resultado5');
+ */
+        
+        
+        
+        
+     
+        
+         
+         //dpm($view->('default'));
+         
+         //LO AÑADIMOS COMO PARTE DEL CONTEN
+        /*$node->content['mapa_view'] = array(
+          '#value' => $mapa_notas,
+          '#weight' => '-10',
+        );*/
+  
+      //Renderizamos la view para sacar las notas relacionadas con el sitio
+      /*$view2 = views_get_view('notas_reference_espacio');
+      dpm($view);
+      $notas_espacio = $view2->render('default');
+*/
+      
+      //TODO: LA VISTA DA PROBLEMAS CON LOS HTML PARSER
+      $node->content['notas_espacio'] = array(
+        '#value' => views_embed_view('notas_reference_espacio', 'default', array(arg(1))),
+        '#weight' => '50',
+      );
+      
+      
+      //Añadimos como parte del content el enlace para generar contenido relacionado con este espacio
+      $node->content['add_nota'] = array(
+        '#prefix' => '<div class="add-nota">',
+        '#value' => '<a href=/node/add/nota/'.$node->nid.'>Añade una nota a este contenido</a>',
+        '#suffix' => '</div>',
+        '#weight' => '-10',
+      );
+      
+
+      
+        
+      }
+      
+  }
+
+
+
+}
+
+
+function mapas_link($type, $object, $teaser = FALSE) {
+  
+  if ($object->type == 'espacio'){
+  
+  //dpm($object, 'node link');
+  
+  $links['buscar_proximidad'] = array(
+          'title' => t('Buscar espacios cercanos'), 
+          //'href' => "mapa_proximidad/".$object->location['latitude'].','.$object->location['longitude'].'_100',
+          'href' => "mapa_proximidad/".$object->nid,
+        );
+  
+  
+  return $links;
+  
+  }
+}
+
+
+function mapas_views_query_alter(&$view, &$query) {
+  // example code here
+  
+  //dpm($view);
+}
+
+  
+/**
+ * Implementation of hook_form_alter().
+ */
+function mapas_form_alter(&$form, &$form_state, $form_id) {
+  
+  
+  
+   /* $form['distance']['search_distance']['#default_value'] = '443434';
+    $form['distance']['postal_code']['#title'] = 'BLA BLA';
+  //  $form['distance']['postal_code']['search_distance'] = 'Malaga';
+    
+    $form_state['input']['distance']['postal_code'] = 'Madrid';
+    $form_state['input']['distance']['search_distance'] = '50';
+    //$form['#parameters'][1]->view['display']['page_2']['display_options']['ar']
+      dpm($form_state);
+  */
+}
+
+
+
+function _color_marcar($tid){
+  switch($tid){
+    //Zona Baño
+    case '12':
+      return 'treasure';
+    break;
+  
+    //Zona verde
+    case '22':
+      return 'route';
+    break;
+  
+    //Parque nacional
+    case '7':
+      return 'cluster';
+    break;
+  
+    //Reserva natural
+    case '38':
+      return 'green';
+    break;
+  
+    //Paisaje protegido
+    case '37':
+      return 'white';
+    break;
+  
+    //Enclave natural
+    case '42':
+      return 'lblue';
+    break;
+  
+    //Arbol singular
+    case '40':
+      return 'small brown';
+    break;
+  
+    default:
+      return 'red';
+    break;
+  
+  }
+  
+  
+}

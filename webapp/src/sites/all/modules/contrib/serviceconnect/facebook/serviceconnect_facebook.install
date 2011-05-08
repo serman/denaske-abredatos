@@ -1,0 +1,46 @@
+<?php
+
+function serviceconnect_facebook_install() {
+  drupal_install_schema('serviceconnect_facebook');
+}
+
+function serviceconnect_facebook_uninstall() {
+  drupal_uninstall_schema('serviceconnect_facebook');
+}
+
+function serviceconnect_facebook_schema() {
+  $schema = array();
+
+  $schema['serviceconnect_user_facebook'] = array(
+    'fields' => array(
+      'scpid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'profile_image_filesize' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'friendscount' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+    ),
+    'primary key' => array('scpid'),
+  );
+  
+  return $schema;
+}

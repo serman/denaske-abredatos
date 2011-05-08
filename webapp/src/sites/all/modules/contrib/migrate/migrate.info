@@ -1,0 +1,12 @@
+name = "Migrate"
+description = "Import content from external sources"
+package = "Development"
+core = 6.x
+dependencies[] = views
+
+; Information added by drupal.org packaging script on 2011-03-30
+version = "6.x-1.2"
+core = "6.x"
+project = "migrate"
+datestamp = "1301520369"
+

@@ -1,0 +1,40 @@
+<?php
+/**
+ * @file
+ * Tests for taxonomy migration
+ *
+ */
+
+class MigrateTaxonomyTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Taxonomy'),
+      'description' => t('Test migration support for taxonomy'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test taxonomy migration
+   */
+  function testTaxonomy() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

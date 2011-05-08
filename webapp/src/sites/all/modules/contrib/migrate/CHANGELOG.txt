@@ -1,0 +1,30 @@
+IMPORTANT: This is the final release of Migrate V1 - there will be no more support for
+this version of Migrate going forward.
+
+Migrate 1.2
+===========
+Bug fixes
+- #1010308 - Support Views 3.0.
+- #736998 - Reset update flag so it isn't continously applied.
+- #1008066 - Clean up drush warnings on --all.
+- #891356 - Export comment noting install-time restriction.
+
+Migrate 1.1
+===========
+Features and enhancements
+- #896434 - Removed requirement for Table Wizard.
+- #893104 - Relax restriction on reusing views.
+- #800144 - Clarify nid field on node migration.
+- #733042 - Use machine_name in drush commands.
+- #725462 - Add $tblinfo to delete hook.
+- #721432 - Update capability added to terms.
+
+Bug fixes
+- #893618 - Lowercase map and message table names.
+- Proper handling of int vs. varchar arguments when running with ID list.
+- #829930 - If view becomes bogus, link to content set so it can be deleted.
+- #790474 - Removed obsolete patch recommendation
+- #736998 - Don't pass update to spawned subshells
+- #719262 - Documented restriction on views with exposed filters.
+- #694020 - Update drush command hook naming
+- #738812 - On comment migration, make sure source field really has a name.

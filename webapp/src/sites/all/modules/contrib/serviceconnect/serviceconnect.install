@@ -1,0 +1,108 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function serviceconnect_install() {
+  drupal_install_schema('serviceconnect');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function serviceconnect_uninstall() {
+  drupal_uninstall_schema('serviceconnect');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function serviceconnect_schema() {
+  $schema = array();
+  
+  $schema['serviceconnect_user'] = array(
+    'fields' => array(
+      'scpid' => array( // Service Connect Profile id
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'service' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'service_uid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'service_profile_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'displayname' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'expires' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => FALSE,
+      ),
+      'last_login' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'second_last_login' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => FALSE,
+      ),
+      'login_attempts' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+    ),
+    'primary key' => array('scpid'),
+    'unique keys' => array(
+      'service_service_uid' => array(array('service', 32), array('service_uid', 128))
+    ),
+    'indexes' => array(
+      'uid' => array('uid'),
+      'service_profile_url' => array(array('service_profile_url', 128)),
+    ),
+  );
+  
+  $schema['serviceconnect_counter'] = array(
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'count' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+  
+  return $schema;
+}

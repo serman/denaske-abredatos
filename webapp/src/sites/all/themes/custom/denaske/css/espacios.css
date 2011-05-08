@@ -1,0 +1,122 @@
+.view-espacios-fotos-notas{
+    -moz-border-radius:10px;
+    -webkit-border-radius:10px;
+    border-radius:10px;
+    position:relative;
+    height:150px;
+    margin-bottom:15px;
+    background:#efefef;
+    -moz-box-shadow:0 0 5px #333;
+    
+}
+
+.view-espacios-fotos-notas .views_slideshow_main{
+    
+    margin:0 55px;
+    
+}
+
+.view-espacios-fotos-notas .views-slideshow-controls-bottom a{
+    
+    position:absolute;
+    background:#ccc;
+    top:50px;
+    width:50px;
+    height:50px;
+    display:block;
+    overflow:hidden;
+    background:url('../img/btn/controls_previous.png') no-repeat 0 0;
+    overflow:hidden;
+    text-indent:1300px;
+    
+    
+}
+
+.view-espacios-fotos-notas .views-slideshow-controls-bottom a.views_slideshow_previous{
+    
+    left:5px;
+    
+}
+
+.view-espacios-fotos-notas .views-slideshow-controls-bottom a.views_slideshow_pause,
+.view-espacios-fotos-notas .views-slideshow-controls-bottom a.views_slideshow_play{
+    display:none;
+}
+
+
+.view-espacios-fotos-notas .views-slideshow-controls-bottom a.views_slideshow_next{
+    
+    right:5px;
+     background-image:url('../img/btn/controls_next.png');
+    
+    
+}
+
+
+#gmap-auto1map-gmap0{
+    
+    margin-bottom:15px;
+    border:1px solid #ccc;
+    -moz-box-shadow:0 0 5px #333;
+    -webkit-box-shadow:0 0 5px #333;
+    box-shadow:0 0 5px #333;
+    width:auto !important;
+    
+    
+}
+
+
+
+.view-espacios-fotos-notas .views-row {
+background:none repeat scroll 0 0 #FFFFFF;
+border:1px solid #aaa;
+border-bottom:2px solid #ccc;
+float:left;
+margin:5px 2px;
+padding:5px;
+
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+
+}
+
+
+.node-type-espacio #informacion{
+    
+    float:left;
+    width:300px;    
+    
+}
+
+
+.node-type-espacio #notas{
+    
+    float:right;
+    width:630px;
+    
+}
+
+
+
+
+
+
+.links li.nota_field_nota_node_nid a {
+    
+    
+    background-image:url('../img/btn/add.png');
+    background-position:5px 0px;
+    background-repeat:no-repeat;
+    padding:5px 10px 5px 40px;
+    
+    
+}
+
+
+
+
+
+
+
+

@@ -1,0 +1,11 @@
+name = Fancy Checkboxes
+description = Replaces default checkboxes with fancy on/off switches under configurable pages.
+core = 6.x
+files[] = fancycheckboxes.module
+
+; Information added by drupal.org packaging script on 2011-02-25
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "fancycheckboxes"
+datestamp = "1298619225"
+

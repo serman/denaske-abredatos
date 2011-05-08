@@ -1,0 +1,62 @@
+<?php
+// $Id: migrate_extras.install,v 1.1.2.1 2010/01/24 19:45:32 mikeryan Exp $
+
+/**
+ * Implementation of hook_schema().
+ */
+function migrate_extras_schema() {
+ $schema['migrate_extras_node_map'] = array(
+  'description' => t('Optional master node map table.'),
+  'fields' => array(
+    'sourceid' => array(
+      'description' => t('Source id of the node.'),
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'destid' => array(
+      'description' => t('Node ID of the imported node.'),
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+  ),
+  'primary key' => array('sourceid'),
+  'indexes' => array(
+    'idkey' => array('destid'),
+  ),
+);
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function migrate_extras_install() {
+  // Create my tables.
+  drupal_install_schema('migrate_extras');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function migrate_extras_uninstall() {
+  // Drop my tables.
+  drupal_uninstall_schema('migrate_extras');
+}
+
+/**
+ * Add the node map
+ */
+function migrate_extras_update_6000() {
+  $ret = array();
+  $schema = migrate_extras_schema();
+  foreach ($schema as $tablename => $tabledef) {
+    if (!db_table_exists($tablename)) {
+      db_create_table($ret, $tablename, $tabledef);
+    }
+  }
+  return $ret;
+}

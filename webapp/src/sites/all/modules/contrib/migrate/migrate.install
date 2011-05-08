@@ -1,0 +1,645 @@
+<?php
+
+/**
+ * @file
+ * Implementation of profile destination handling
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function migrate_schema() {
+  $schema['migrate_content_sets'] = array(
+    'description' => 'Sets of content mappings',
+    'fields' => array(
+      'mcsid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Unique ID',
+      ),
+      'view_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'view_args' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'sourcekey' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'contenttype' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'node',
+      ),
+      'desttype' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'lastimported' => array(
+        'type' => 'datetime',
+        'not null' => FALSE,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rowcount' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'multiple_separator' => array(
+        'type' => 'varchar',
+        'length' => 8,
+        'not null' => TRUE,
+        'default' => ',',
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('mcsid'),
+    'indexes' => array(
+      'view_name' => array('view_name'),
+    ),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
+    ),
+  );
+  $schema['migrate_content_mappings'] = array(
+    'description' => t('Content field mappings'),
+    'fields' => array(
+      'mcmid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'mcsid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'srcfield' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'destfield' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'default_value' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'primary_key' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('mcmid'),
+    'unique keys' => array(
+      'colkey' => array('mcsid', 'destfield'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function migrate_install() {
+  // Create tables
+  drupal_install_schema('migrate');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function migrate_uninstall() {
+  // Remove dynamically-created mapping and message tables
+  $tw_active = module_exists('tw');
+  $sql = "SELECT mcsid FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $maptablename = 'migrate_map_' . $row->mcsid;
+    if ($tw_active) {
+      tw_remove_tables($maptablename);
+    }
+    if (db_table_exists($maptablename)) {
+      $sql = "DROP TABLE $maptablename";
+      db_query($sql);
+    }
+    $msgtablename = 'migrate_msgs_' . $row->mcsid;
+    if ($tw_active) {
+      tw_remove_tables($msgtablename);
+    }
+    if (db_table_exists($msgtablename)) {
+      $sql = "DROP TABLE $msgtablename";
+      db_query($sql);
+    }
+  }
+  drupal_uninstall_schema('migrate');
+}
+
+/*
+ * Refactoring of map and message tables
+ */
+function migrate_update_6000() {
+  drupal_load('module', 'migrate');
+  $ret = array();
+
+  // Need to make sure schema inspect support is included
+  schema_init();
+  // Make view_name unique
+  db_drop_index($ret, 'migrate_content_sets', 'view_name');
+  db_add_unique_key($ret, 'migrate_content_sets', 'view_name', array('view_name'));
+
+  $sql = "SELECT * FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    // Rename map and message tables
+    $oldmaptable = $row->view_name . '_' . $row->contenttype . '_map';
+    if (db_table_exists($oldmaptable)) {
+      $newmaptable = migrate_map_table_name($row->view_name);
+      db_rename_table($ret, $oldmaptable, $newmaptable);
+      $maptableexists = TRUE;
+    }
+    else {
+      $maptableexists = FALSE;
+    }
+    $oldmsgtable = $row->view_name . '_' . $row->contenttype . '_msgs';
+    if (db_table_exists($oldmsgtable)) {
+      $newmsgtable = migrate_message_table_name($row->view_name);
+      db_rename_table($ret, $oldmsgtable, $newmsgtable);
+      $msgtableexists = TRUE;
+    }
+    else {
+      $msgtableexists = FALSE;
+    }
+
+    if ($maptableexists) {
+      // Remove mcsid from map table
+      db_drop_field($ret, $newmaptable, 'mcsid');
+
+      // Rename remaining map table columns
+      db_drop_primary_key($ret, $newmaptable);
+      db_drop_unique_key($ret, $newmaptable, 'idkey');
+      db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid',
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+        array('primary key' => array('sourceid')));
+      db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid',
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
+        array('unique keys' => array('destid' => array('destid'))));
+
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmaptable);
+      tw_add_tables($newmaptable);
+    }
+
+    if ($msgtableexists) {
+      tw_remove_tables($oldmsgtable);
+      tw_add_tables($newmsgtable);
+    }
+
+    // Save the content set, to make sure the message table is created
+    migrate_save_content_set($row);
+  }
+  return $ret;
+}
+
+/**
+ * Refactoring of content/destination types
+ *
+ */
+function migrate_update_6001() {
+  $ret = array();
+  // Clear desttype, except for nodes
+  $sql = "UPDATE {migrate_content_sets} SET desttype='' WHERE contenttype <> 'node'";
+  $ret = update_sql($sql);
+  return $ret;
+}
+
+/**
+ * The {node} field for the updated timestamp is actually called 'changed'
+ */
+function migrate_update_6002() {
+  $ret = array();
+  $sql = "UPDATE {migrate_content_mappings}
+          SET destfield='changed'
+          WHERE destfield='updated' AND mcsid IN
+            (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')";
+  $ret[] = update_sql($sql);
+  return $ret;
+}
+
+/**
+ * Hook names have changed - notify the admin
+ */
+function migrate_update_6003() {
+  drupal_set_message(t('The Migrate module API has changed - all functions and hooks
+    containing the word destination have been renamed to remove that word. Any hooks
+    listed below will need to be renamed - please review your code carefully
+    to make sure there are no other changes to make.'));
+  // Tell modules to include their migrate hooks
+  module_invoke_all('migrate_init');
+
+  foreach (module_implements('migrate_destination_types') as $module) {
+    drupal_set_message($module . '_migrate_destination_types');
+  }
+
+  $desttypes = migrate_invoke_all('destination_types');
+  foreach ($desttypes as $type => $info) {
+    foreach (module_implements("migrate_destination_fields_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_fields_$type");
+    }
+    foreach (module_implements("migrate_destination_delete_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_delete_$type");
+    }
+    foreach (module_implements("migrate_destination_import_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_import_$type");
+    }
+  }
+
+  foreach (module_implements('migrate_destination_prepare_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_node');
+  }
+  foreach (module_implements('migrate_destination_prepare_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_user');
+  }
+  foreach (module_implements('migrate_destination_prepare_role') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_role');
+  }
+  foreach (module_implements('migrate_destination_prepare_comment') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_comment');
+  }
+  foreach (module_implements('migrate_destination_prepare_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_term');
+  }
+  foreach (module_implements('migrate_destination_complete_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_node');
+  }
+  foreach (module_implements('migrate_destination_complete_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_user');
+  }
+  foreach (module_implements('migrate_destination_complete_role') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_role');
+  }
+  foreach (module_implements('migrate_destination_complete_comment') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_comment');
+  }
+  foreach (module_implements('migrate_destination_complete_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_term');
+  }
+  foreach (module_implements('migrate_destination_xlat_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_node');
+  }
+  foreach (module_implements('migrate_destination_xlat_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_user');
+  }
+  foreach (module_implements('migrate_destination_xlat_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_term');
+  }
+  return array();
+}
+
+/*
+ * Refactoring of map and message table names
+ */
+function migrate_update_6004() {
+  drupal_load('module', 'migrate');
+  $ret = array();
+
+  // Need to make sure schema inspect support is included
+  schema_init();
+  // Make view_name unique
+
+  $sql = "SELECT * FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    // Rename map and message tables
+    $oldmaptable = $row->view_name . '_map';
+    if (db_table_exists($oldmaptable)) {
+      $newmaptable = migrate_map_table_name($row->mcsid);
+      db_rename_table($ret, $oldmaptable, $newmaptable);
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmaptable);
+      tw_add_tables($newmaptable);
+    }
+
+    $oldmsgtable = $row->view_name . '_msgs';
+    if (db_table_exists($oldmsgtable)) {
+      $newmsgtable = migrate_message_table_name($row->mcsid);
+      db_rename_table($ret, $oldmsgtable, $newmsgtable);
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmsgtable);
+      tw_add_tables($newmsgtable);
+    }
+  }
+  return $ret;
+}
+
+
+/*
+ * Add semaphore field
+ */
+function migrate_update_6005() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'semaphore',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+  variable_del('migrate_semaphore');
+  return $ret;
+}
+
+/*
+ * Cron processing - set to TRUE on update, so existing installations will not
+ * be surprised by cron processing stopping. The default value for new installations
+ * will be FALSE - drush is the preferred mechanism for long migration processes.
+ */
+function migrate_update_6006() {
+  variable_set('migrate_enable_cron', TRUE);
+  return array();
+}
+
+/*
+ * Add separator field.
+ */
+function migrate_update_6007() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'multiple_separator',
+    array('type' => 'char', 'length' => 1, 'not null' => TRUE, 'default' => ','));
+  return $ret;
+}
+
+/*
+ * Add view_args field
+ */
+function migrate_update_6008() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'view_args',
+    array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  // Ideally we'd want a unique key on view_name,view_args. However, MySQL
+  // will complain that the key is too long (if the table has UTF8 encoding).
+  // It's up to the code to enforce uniqueness.
+  db_drop_unique_key($ret, 'migrate_content_sets', 'view_name');
+  db_add_index($ret, 'migrate_content_sets', 'view_name',
+    array('view_name'));
+  return $ret;
+}
+
+/*
+ * Add support for updating content sets
+ */
+function migrate_update_6009() {
+  drupal_load('module', 'migrate');
+  $ret = array();
+  // Add needs_update flag to each mapping table
+  $result = db_query('SELECT mcsid FROM {migrate_content_sets}');
+  while ($row = db_fetch_object($result)) {
+    $maptable = migrate_map_table_name($row->mcsid);
+    if (db_table_exists($maptable)) {
+      db_add_field($ret, $maptable, 'needs_update',
+        array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+    }
+  }
+
+  return $ret;
+}
+
+/*
+ * Refactor workflow
+ */
+function migrate_update_6010() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'status',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => 0));
+  db_drop_field($ret, 'migrate_content_sets', 'importing');
+  db_drop_field($ret, 'migrate_content_sets', 'clearing');
+  db_drop_field($ret, 'migrate_content_sets', 'scanning');
+  db_drop_field($ret, 'migrate_content_sets', 'semaphore');
+  variable_del('migrate_enable_cron');
+  return $ret;
+}
+
+/**
+ * Use 'created' instead of 'date' for node import
+ */
+function migrate_update_6011() {
+  $ret = array();
+  db_query("UPDATE {migrate_content_mappings}
+            SET destfield='created'
+            WHERE destfield='date' AND mcsid IN
+              (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')");
+  return $ret;
+}
+
+/*
+ * Add primary_key flag to mappings table
+ */
+function migrate_update_6012() {
+  $ret = array();
+  // Flag indicates the primary key of the destination
+  db_add_field($ret, 'migrate_content_mappings', 'primary_key',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => 0));
+  // Set the flag for known destination PKs
+  $sql = "SELECT mcsid, contenttype
+          FROM {migrate_content_sets}
+          WHERE contenttype IN ('node', 'user', 'comment', 'role', 'term')";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $sql = "UPDATE {migrate_content_mappings}
+            SET primary_key=1
+            WHERE mcsid=%d AND destfield='%s'";
+    switch ($row->contenttype) {
+      case 'node':
+        $destfield = 'nid';
+        break;
+      case 'user':
+        $destfield = 'uid';
+        break;
+      case 'comment':
+        $destfield = 'cid';
+        break;
+      case 'role':
+        $destfield = 'rid';
+        break;
+      case 'term':
+        $destfield = 'tid';
+        break;
+      default:
+        $destfield = '';
+        break;
+    }
+    if ($destfield) {
+      db_query($sql, $row->mcsid, $destfield);
+    }
+  }
+  return $ret;
+}
+
+/*
+ * Allow longer multiple_separator
+ */
+function migrate_update_6013() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_sets', 'multiple_separator', 'multiple_separator', array(
+    'type' => 'varchar',
+    'length' => 8,
+    'not null' => TRUE,
+    'default' => ',',
+  ));
+  return $ret;
+}
+
+/*
+ * Make sure all NOT NULL columns have defaults
+ */
+function migrate_update_6014() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_sets', 'view_name', 'view_name',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'desttype', 'desttype',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'description', 'description',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'weight', 'weight',
+    array(
+      'type' => 'int',
+      'unsigned' => FALSE,
+      'not null' => TRUE,
+      'default' => 0,
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'mcsid', 'mcsid',
+    array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'srcfield', 'srcfield',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'destfield', 'destfield',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'default_value', 'default_value',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'default' => '',
+    )
+  );
+  return $ret;
+}
+
+/*
+ * Add unique alpha-numeric identifier
+ */
+function migrate_update_6015() {
+  $ret = array();
+  // Add machine_name field - maximum length for generating table names
+  // like migrate_msgs_<machine_name>
+  db_add_field($ret, 'migrate_content_sets', 'machine_name',
+    array('type' => 'varchar', 'length' => 50, 'not null' => TRUE,
+          'default' => ''));
+
+  // Initialize contents to mcsid (known unique)
+  db_query("UPDATE {migrate_content_sets} SET machine_name = mcsid");
+
+  // Now that the contents are unique, add a unique key
+  db_add_unique_key($ret, 'migrate_content_sets', 'machine_name',
+    array('machine_name'));
+  return $ret;
+}
+
+/*
+ * Correct mis-updated default_value back to nullable
+ */
+function migrate_update_6016() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_mappings', 'default_value', 'default_value',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'default' => '',
+    )
+  );
+  return $ret;
+}

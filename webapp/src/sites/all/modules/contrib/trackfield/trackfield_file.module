@@ -1,0 +1,55 @@
+<?php
+
+DEFINE('DATASET_PREFIX', 'file_');
+
+function trackfield_file_trackfield_valuetypes() {
+  /* Go find out what other modules return */
+  $others = array();
+  $hook = 'trackfield_valuetypes';
+  foreach (module_implements($hook) as $module) {
+    if ($module == 'trackfield_file') { continue; }
+    $function = $module .'_'. $hook;
+    $result = call_user_func_array($function, array());
+    if (isset($result) && is_array($result)) {
+      foreach ($result as $key => $value) {
+        $others[DATASET_PREFIX . $key] = t('File: ') . $value;
+      }
+    }
+  }
+  return $others;
+}
+
+function _trackfield_file_invoke_handler($hook, $item, $node) {
+  $valuetype = $item['valuetype'];
+  if (substr($valuetype, 0, strlen(DATASET_PREFIX)) != DATASET_PREFIX) { return; }
+  
+  /* Replace the item type & load value from the file */
+  $item['valuetype'] = substr($valuetype, strlen(DATASET_PREFIX));
+  
+  /* Find the file */
+  foreach ($node->files as $file) {
+    if ($file['filename'] == $item['value']) {
+      $filepath = $file['filepath'];
+    }
+  }
+  
+  if (module_exists('trackfield_queue') && _trackfield_queue_should_queue(filesize($filepath), $node)) {
+    if ($hook == 'trackfield_validate') return FALSE;
+    return array('attributes' => array('should_queue' => 1));
+  }
+ 
+  $data = file_get_contents($filepath);
+  $item['value'] = $data;
+  return module_invoke_all($hook, $item, $node);
+}
+
+function trackfield_file_trackfield_validate($item, $node) {
+  return _trackfield_file_invoke_handler('trackfield_validate', $item, $node);
+}
+
+function trackfield_file_trackfield_submit($item, $node) {
+  return _trackfield_file_invoke_handler('trackfield_submit', $item, $node);
+}
+
+
+?>
