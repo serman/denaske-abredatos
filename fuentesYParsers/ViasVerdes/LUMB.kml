@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>LUMB.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>LUMB</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>LUMB</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de la Foz de Lumbier</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Liédena y Lumbier</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Navarra</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra sin acondicionar y asflato</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-1.31075,42.649892,0 -1.310763,42.649832,0 -1.310465,42.649127,0 -1.309849,42.648557,0 -1.309296,42.647989,0 -1.309316,42.647243,0 -1.30991,42.646318,0 -1.310261,42.645016,0 -1.310307,42.64329,0 -1.310102,42.64156,0 -1.309871,42.640762,0 -1.309513,42.639963,0 -1.309147,42.639491,0 -1.308217,42.638777,0 -1.305654,42.636292,0 -1.305358,42.635551,0 -1.303663,42.634182,0 -1.302294,42.633415,0 -1.30118,42.632512,0 -1.30051,42.631568,0 -1.300217,42.630723,0 -1.300228,42.630304,0 -1.301293,42.628358,0 -1.30184,42.626826,0 -1.301984,42.626175,0 -1.301935,42.625661,0 -1.301382,42.625092,0 -1.300442,42.624798,0 -1.29912,42.624546,0 -1.297798,42.624385,0 -1.295401,42.62421,0 -1.291619,42.623827,0 -1.290427,42.623482,0 -1.289121,42.622669,0 -1.288751,42.622337,0 -1.288635,42.622008,0 -1.288583,42.621587,0 -1.288791,42.62089,0 -1.288678,42.620422,0 -1.288497,42.620093,0 -1.288124,42.619853,0 -1.287314,42.619421,0 -1.284913,42.618424,0 -1.284162,42.618211,0 -1.276828,42.616814,0 -1.276392,42.616247,0 -1.276435,42.615867,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

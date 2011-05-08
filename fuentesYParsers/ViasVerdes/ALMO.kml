@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>ALMO.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>ALMO</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>ALMO</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Almanzora. Tramo de Olula del Río</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Olula del Río</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Almería</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>1,6</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Asfalto</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-2.289731,37.357627,0 -2.290493,37.357774,0 -2.292816,37.3581,0 -2.293773,37.358332,0 -2.294817,37.358679,0 -2.296106,37.359408,0 -2.301209,37.362429,0 -2.301975,37.362786,0 -2.303047,37.363163,0 -2.303774,37.363313,0 -2.304339,37.36339,0 -2.304886,37.363422,0 -2.305305,37.363403,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

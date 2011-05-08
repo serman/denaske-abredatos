@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>LINA.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>LINA</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>LINA</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Linares</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Linares y la Estación de Linares-Baeza</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Jaén</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Asfalto y zahorra</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-3.585001,38.075476,0 -3.584338,38.07654,0 -3.583506,38.077788,0 -3.583303,38.078357,0 -3.583149999999999,38.078975,0 -3.583204,38.079601,0 -3.583342000000001,38.080257,0 -3.58401,38.081353,0 -3.584466,38.081842,0 -3.585152,38.082244,0 -3.58552,38.082503,0 -3.58603,38.083,0 -3.591643,38.084762,0 -3.592645000000001,38.085425,0 -3.593100000000001,38.085876,0 -3.593591,38.086779,0 -3.593569,38.087829,0 -3.593243,38.088593,0 -3.592586,38.089384,0 -3.591625,38.090081,0 -3.590062000000001,38.090636,0 -3.588826,38.090809,0 -3.585116,38.091019,0 -3.583881,38.09124,0 -3.583038,38.091506,0 -3.582047,38.092083,0 -3.581451,38.092921,0 -3.581127,38.093971,0 -3.581284,38.094782,0 -3.581712,38.095471,0 -3.582503,38.096349,0 -3.582933,38.097182,0 -3.583182,38.098277,0 -3.58346,38.099039,0 -3.583796,38.099634,0 -3.586472999999999,38.102172,0 -3.587744,38.102666,0 -3.589013,38.102851,0 -3.590128,38.102654,0 -3.591149,38.102053,0 -3.591927,38.101143,0 -3.592221,38.100355,0 -3.59261,38.099852,0 -3.59342,38.099228,0 -3.594111,38.098867,0 -3.596728,38.097899,0 -3.597718,38.097203,0 -3.598407,38.09646,0 -3.599686,38.094379,0 -3.600617000000001,38.093683,0 -3.60176,38.093272,0 -3.602815,38.093242,0 -3.603964,38.093404,0 -3.607320000000001,38.094363,0 -3.611769,38.095819,0 -3.613401,38.096192,0 -3.615515,38.096324,0 -3.618176,38.096316,0 -3.618359,38.096256,0 -3.620773,38.095925,0 -3.622206,38.095634,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

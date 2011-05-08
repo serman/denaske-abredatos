@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>ARRA.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>ARRA</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>ARRA</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Arrazola</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Apatamonasterio y Arrazola (Atxondo)</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Vizcaya</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>5</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra compactada</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-2.582267,43.130141,0 -2.582847,43.128796,0 -2.583088,43.127488,0 -2.583222,43.126957,0 -2.583432,43.126465,0 -2.58406,43.125594,0 -2.584139,43.125423,0 -2.584219,43.125007,0 -2.584052,43.123014,0 -2.584055,43.122521,0 -2.584268,43.121611,0 -2.584557,43.120987,0 -2.584664,43.120437,0 -2.584821,43.120153,0 -2.584798,43.119774,0 -2.584492,43.119147,0 -2.584085,43.118417,0 -2.584088,43.118061,0 -2.584753,43.11555,0 -2.585506,43.114036,0 -2.587244,43.110841,0 -2.587311,43.11051,0 -2.587313,43.110177,0 -2.587219,43.109798,0 -2.586028,43.108655,0 -2.585579,43.108156,0 -2.584935,43.107679,0 -2.584712,43.107251,0 -2.584618,43.106729,0 -2.584347,43.103788,0 -2.583417,43.102386,0 -2.582774,43.101957,0 -2.580161,43.100738,0 -2.579581,43.100309,0 -2.579016,43.099817,0 -2.57852,43.099333,0 -2.577714,43.098903,0 -2.577005,43.09845,0 -2.576361,43.098139,0 -2.574265,43.096993,0 -2.57288,43.096182,0 -2.57195,43.094827,0 -2.57163,43.09447,0 -2.57035,43.092191,0 -2.57006,43.091851,0 -2.569741,43.091546,0 -2.567024,43.091323,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

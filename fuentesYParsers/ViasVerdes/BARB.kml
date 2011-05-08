@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>BARB.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>BARB</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>BARB</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Santa Bárbara</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Sotrondio y La Cruz</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Asturias</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>2</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-5.605086,43.272441,0 -5.605242,43.271734,0 -5.605538,43.271398,0 -5.605801,43.271017,0 -5.605939,43.270617,0 -5.606016,43.269867,0 -5.606282,43.269179,0 -5.606663,43.268627,0 -5.607052,43.268311,0 -5.607335,43.26801,0 -5.607614,43.267651,0 -5.608434,43.266135,0 -5.608814,43.26557,0 -5.60941,43.264979,0 -5.609705,43.264632,0 -5.609831,43.264311,0 -5.609816,43.263971,0 -5.609967,43.263479,0 -5.610125,43.26317,0 -5.610316,43.262949,0 -5.610427,43.262629,0 -5.610682,43.262442,0 -5.610896,43.262346,0 -5.611029,43.262185,0 -5.610984,43.261856,0 -5.611018,43.261572,0 -5.611793,43.261157,0 -5.612122,43.260866,0 -5.612269,43.260681,0 -5.61234,43.26052,0 -5.612597,43.260367,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

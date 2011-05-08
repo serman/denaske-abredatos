@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>MAEZ.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>MAEZ</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>MAEZ</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Maeztu</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre la boca de salida del túnel de Laminoría y Maeztu</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Alava</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra sin acondicionar</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-2.444157,42.769013,0 -2.444778,42.767415,0 -2.444961,42.765353,0 -2.444772,42.76465,0 -2.444934,42.762949,0 -2.444916,42.762129,0 -2.444694,42.761065,0 -2.444613,42.760489,0 -2.444472,42.759894,0 -2.44198,42.75437,0 -2.441897,42.754019,0 -2.441875,42.753766,0 -2.441882,42.752983,0 -2.441971,42.752587,0 -2.442145,42.752318,0 -2.442842,42.751546,0 -2.443186,42.751212,0 -2.443988,42.750629,0 -2.445477,42.749938,0 -2.445895,42.749697,0 -2.446486,42.749241,0 -2.44667,42.749053,0 -2.446831,42.748828,0 -2.446894,42.748685,0 -2.446997,42.748055,0 -2.447234,42.746138,0 -2.447533,42.744068,0 -2.44761,42.743708,0 -2.447717,42.742646,0 -2.447647,42.742267,0 -2.447221,42.742388,0 -2.446866,42.742183,0 -2.44676,42.742051,0 -2.446821,42.741885,0 -2.447014,42.741658,0 -2.446908,42.741482,0 -2.44653,42.741051,0 -2.446498,42.740947,0 -2.445806,42.740502,0 -2.445211,42.740058,0 -2.445005,42.739868,0 -2.444479,42.739253,0 -2.44386,42.738188,0 -2.443824,42.738079,0 -2.44363,42.737853,0 -2.443206,42.737527,0 -2.442768,42.737291,0 -2.442476,42.737199,0 -2.441927,42.737098,0 -2.441389,42.737095,0 -2.436813,42.73791,0 -2.436189,42.737961,0 -2.435677,42.737931,0 -2.435299,42.737858,0 -2.434872,42.737711,0 -2.434216,42.737321,0 -2.433684,42.736715,0 -2.433565,42.736381,0 -2.433521,42.735877,0 -2.433584,42.735598,0 -2.433821,42.735068,0 -2.434546,42.733647,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

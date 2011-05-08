@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>TCAM.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>TCAM</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>TCAM</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Tierra de Campos</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Cuenca de Campos y Villalón</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Valladolid</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>4,5</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Zahorra con gravilla</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-5.047998,42.054752,0 -5.04919,42.064797,0 -5.049262,42.066651,0 -5.049187,42.068075,0 -5.048751,42.070299,0 -5.048136,42.071841,0 -5.045506,42.077642,0 -5.044712,42.078899,0 -5.044041,42.079452,0 -5.04328,42.079843,0 -5.04087,42.080841,0 -5.039847,42.081382,0 -5.039318,42.081832,0 -5.038911,42.082335,0 -5.038731,42.082761,0 -5.038515,42.083945,0 -5.038354,42.084596,0 -5.038031,42.085079,0 -5.037636,42.085563,0 -5.036478,42.086404,0 -5.033352,42.088846,0 -5.030551,42.09143,0 -5.028764,42.093214,0 -5.027874,42.094328,0 -5.026596,42.095386,0 -5.025919,42.095768,0 -5.025432,42.096106,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

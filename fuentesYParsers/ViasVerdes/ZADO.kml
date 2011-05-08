@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>ZADO.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>ZADO</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>ZADO</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. del Zadorra</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Vitoria-Gasteiz y Puerto de Arlabán</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Alava</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>15</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra acondicionada y riego asfáltico</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-2.583841,42.968156,0 -2.584368,42.968008,0 -2.58522,42.96756,0 -2.585604,42.967153,0 -2.585988,42.96651,0 -2.587026,42.964494,0 -2.587733,42.963723,0 -2.588175,42.963101,0 -2.589001,42.962287,0 -2.589508,42.960657,0 -2.59001,42.960078,0 -2.592538,42.958286,0 -2.593475,42.957989,0 -2.593884,42.95799,0 -2.595565,42.958297,0 -2.597814,42.958907,0 -2.602546,42.959998,0 -2.604708,42.960371,0 -2.607016,42.960873,0 -2.607367,42.960874,0 -2.608801,42.960771,0 -2.611648,42.960424,0 -2.613814,42.960052,0 -2.623085,42.958587,0 -2.623759,42.958432,0 -2.624405,42.958181,0 -2.625125,42.9577,0 -2.625414,42.957385,0 -2.626586,42.955578,0 -2.627903,42.953466,0 -2.628368,42.952362,0 -2.628397,42.949346,0 -2.629285,42.94766,0 -2.632807,42.94306,0 -2.633983,42.94199,0 -2.635864,42.940385,0 -2.636631,42.939355,0 -2.637016,42.938561,0 -2.63764,42.936866,0 -2.638206,42.934999,0 -2.638579,42.931455,0 -2.638494,42.93081,0 -2.63836,42.928825,0 -2.638292,42.925626,0 -2.63852,42.925057,0 -2.638522,42.924773,0 -2.639527,42.918585,0 -2.640752,42.913368,0 -2.640722,42.913059,0 -2.641316,42.910744,0 -2.641419,42.909677,0 -2.642046,42.907518,0 -2.642809,42.903794,0 -2.643203,42.902884,0 -2.643436,42.901594,0 -2.644232,42.897988,0 -2.644398,42.89692,0 -2.644637,42.894913,0 -2.646011,42.886035,0 -2.647127,42.877044,0 -2.647556,42.874274,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

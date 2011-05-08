@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>LUCA.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>LUCA</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>LUCA</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Lucainena</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Lucainena de las Torres</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Almería</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>11,5</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra sin acondicionar</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-2.155512,37.033199,0 -2.156252,37.034331,0 -2.15663,37.035018,0 -2.157108,37.035652,0 -2.157307,37.035814,0 -2.157557,37.03591,0 -2.158192,37.036048,0 -2.158725,37.036227,0 -2.15979,37.036811,0 -2.160922,37.037356,0 -2.161738,37.037671,0 -2.162056,37.037673,0 -2.162324,37.037634,0 -2.162594,37.037476,0 -2.16278,37.037248,0 -2.163136,37.036942,0 -2.163405,37.036823,0 -2.163758,37.036692,0 -2.164176,37.036749,0 -2.164676,37.0369,0 -2.165142,37.037104,0 -2.165591,37.037349,0 -2.166471,37.03808,0 -2.166853,37.038297,0 -2.16907,37.039104,0 -2.169388,37.039133,0 -2.169622,37.039121,0 -2.170195,37.038816,0 -2.170666,37.038523,0 -2.170968,37.038409,0 -2.171331,37.038325,0 -2.171886,37.038251,0 -2.173122,37.037603,0 -2.173376,37.037537,0 -2.173557,37.037538,0 -2.174784,37.037711,0 -2.175049,37.037761,0 -2.175552,37.038006,0 -2.176911,37.038286,0 -2.177983,37.038339,0 -2.178193,37.038376,0 -2.179299,37.039192,0 -2.179989,37.039523,0 -2.180182,37.039706,0 -2.180389,37.039998,0 -2.180599,37.04012,0 -2.180885,37.04023,0 -2.181366,37.040222,0 -2.182318,37.039987,0 -2.182605,37.039976,0 -2.18373,37.040419,0 -2.18445,37.040666,0 -2.188209,37.041624,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

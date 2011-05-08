@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>SM3.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>SM3</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>SM3</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. Santander-Mediterráneo III. Tramo de la Engaña</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre la estación de Valdeporres y el túnel de la Engaña</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Burgos</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra compactada</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-3.738683,43.002875,0 -3.738496,43.004087,0 -3.7382,43.006998,0 -3.738012,43.007711,0 -3.737785,43.00818,0 -3.736950000000001,43.009167,0 -3.736368,43.009774,0 -3.735688999999999,43.010409,0 -3.735084000000001,43.011196,0 -3.734373,43.012227,0 -3.733543,43.013646,0 -3.732038,43.016069,0 -3.731723,43.016432,0 -3.729936,43.017857,0 -3.729525,43.018373,0 -3.729226,43.019077,0 -3.728921000000001,43.020241,0 -3.728858,43.021159,0 -3.729027,43.021969,0 -3.729348,43.022651,0 -3.729841,43.023296,0 -3.730612,43.024147,0 -3.731817,43.025364,0 -3.732739,43.026565,0 -3.733715,43.028071,0 -3.734469,43.029552,0 -3.734541,43.03047,0 -3.734404,43.031318,0 -3.734175,43.031706,0 -3.732776,43.033759,0 -3.732528,43.034562,0 -3.732273000000001,43.03587,0 -3.732149,43.036771,0 -3.732311,43.037986,0 -3.732914,43.039215,0 -3.733653,43.040381,0 -3.734333,43.041845,0 -3.734799000000001,43.044921,0 -3.735255,43.04608,0 -3.736418,43.047829,0 -3.736733,43.048502,0 -3.736835,43.048834,0 -3.736902,43.049266,0 -3.736898,43.049942,0 -3.736828,43.050257,0 -3.736636,43.050628,0 -3.736394,43.050989,0 -3.736031,43.051361,0 -3.735569,43.051751,0 -3.734388,43.052956,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

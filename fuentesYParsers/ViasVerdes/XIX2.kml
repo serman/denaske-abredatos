@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>XIX2.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>XIX2</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>XIX2</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. del Xixarra 2</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Santuario de las Virtudes y Biar</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Alicante</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>15</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra acondicionada</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-0.934837,38.621193,0 -0.9333470000000002,38.62081,0 -0.926376,38.617576,0 -0.922003,38.615914,0 -0.918859,38.616017,0 -0.9121680000000001,38.616621,0 -0.9105489999999999,38.616972,0 -0.904616,38.619174,0 -0.899721,38.620913,0 -0.896986,38.621476,0 -0.8949209999999999,38.62155,0 -0.8923829999999999,38.621725,0 -0.890772,38.622333,0 -0.887205,38.625149,0 -0.876199,38.633659,0 -0.8742310000000001,38.634982,0 -0.873862,38.635196,0 -0.8733390000000001,38.635302,0 -0.872535,38.635329,0 -0.871957,38.635293,0 -0.871349,38.635185,0 -0.870974,38.635056,0 -0.870493,38.634769,0 -0.869872,38.634151,0 -0.869547,38.633669,0 -0.8689480000000001,38.632079,0 -0.868709,38.631525,0 -0.867072,38.629592,0 -0.8644180000000001,38.627713,0 -0.863346,38.627334,0 -0.86037,38.627849,0 -0.858794,38.62831,0 -0.855027,38.629036,0 -0.8521909999999999,38.629663,0 -0.8463570000000001,38.631043,0 -0.8338030000000001,38.635502,0 -0.8232049999999999,38.639327,0 -0.82004,38.640608,0 -0.814322,38.643239,0 -0.81275,38.643274,0 -0.8119379999999999,38.642965,0 -0.8109150000000002,38.642141,0 -0.806476,38.638363,0 -0.800359,38.633089,0 -0.798979,38.63225,0 -0.798335,38.632045,0 -0.7975489999999998,38.631858,0 -0.791716,38.63172,0 -0.78955,38.632335,0 -0.780122,38.638229,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

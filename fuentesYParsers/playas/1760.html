@@ -1,0 +1,312 @@
+<!--ciudadanoVerLocalizacionZona.jsp -->
+
+
+
+
+
+
+
+
+<html>
+<head>
+<META Http-Equiv="Cache-Control" Content="no-cache">
+<META Http-Equiv="Pragma" Content="no-cache"><META Http-Equiv="Expires" Content="0">
+<title>Sistema de Información Nacional de Aguas de Baño</title>
+<link rel="stylesheet" href="/Splayas/css/estilos.css" type="text/css">
+<script type="text/javascript" src ="/Splayas/js/funciones.js"></script>
+<script type="text/javascript" src ="/Splayas/js/validacion.js"></script>
+<script type="text/javascript" src ="/Splayas/js/calendar.js"></script>
+<script type="text/javascript" src ="/Splayas/js/menu_generator.js" ></script>
+<script type="text/javascript">
+
+	function enviar(pestania){
+	    document.ciudadanoZonaForm.pestanya.value=pestania;
+	    document.ciudadanoZonaForm.action="ciudadanoVerZonaAction.do";
+	    document.ciudadanoZonaForm.submit();
+   	}
+
+	function volver(){
+	    document.ciudadanoZonaForm.pestanya.value="";
+            if(document.ciudadanoZonaForm.actionProcedencia.value=="ciudadanoZonaAction"){
+	       document.ciudadanoZonaForm.codCCAA.value="";
+	       document.ciudadanoZonaForm.codProvincia.value="";
+	       document.ciudadanoZonaForm.codMunicipio.value="";
+	       document.ciudadanoZonaForm.codZona.value="";
+	       document.ciudadanoZonaForm.denZona.value="";
+               document.ciudadanoZonaForm.provinciaMapa.value="";
+	       document.ciudadanoZonaForm.pestanya.value="";
+               document.ciudadanoZonaForm.actionProcedencia.value="";
+		document.ciudadanoZonaForm.action="ciudadanoZonaAction.do";
+      	      document.ciudadanoZonaForm.submit();
+            }
+            if(document.ciudadanoZonaForm.actionProcedencia.value=="ciudadanoListaZonaAction"){
+		    document.ciudadanoZonaForm.action="ciudadanoListaZonaAction.do";
+		    document.ciudadanoZonaForm.submit();
+            }
+	}
+
+	function imprimir(){
+	   var ventana=window.open('/Splayas/html/ciudadano/CiudadanoVerZonai.html','imprimir','resizable=yes,toolbar=no,status=yes,scrollbars=yes,location=no,menubar=no,directories=no,width=800,height=540');
+	}
+
+        function verMapaSigpac(enlace){
+	   var ventana=window.open(enlace,'sigpac','resizable=yes,toolbar=no,status=no,scrollbars=yes,location=no,menubar=no,directories=no,width=800,height=540');
+        }
+
+	function verFoto (tipoEntidad,tipoArchivo,codEntidad){
+	   var PosX = (screen.availWidth - 600)/2;
+	   var PosY = (screen.availHeight - 350)/2;
+           var descargasFijas = "0";
+	   var ventana=window.open("/Splayas/ciudadano/ciudadanoVerImg.jsp?descargasFijas="+descargasFijas+"&tipoEntidad="+tipoEntidad+"&tipo="+tipoArchivo+"&codigoEntidad="+codEntidad,"imagen","resizable=yes,scrollbars=yes,menubar=no,width=600,height=350,left=" + PosX + ",top=" + PosY);
+	}
+
+	function descargarDatoAmbiental(nombreDocSistema){
+		tipoEntidad=4;
+		tipoArchivo=1;
+		var PosX = (screen.availWidth - 600)/2;
+		var PosY = (screen.availHeight - 350)/2;
+		var enlace ='/Splayas'+"/ciudadano/ciudadanoDownloadAction.do?tipoEntidad="+tipoEntidad+"&tipo="+tipoArchivo+"&nombreArchivo="+nombreDocSistema;
+	    var ventana=window.open(enlace,"imagen","resizable=yes,scrollbars=yes,menubar=no,width=600,height=350,left=" + PosX + ",top=" + PosY);	    		
+	}
+</script>
+</head>
+
+<body>
+
+<img src="/Splayas/images/logoSuperior.gif"/>
+<br><br>
+
+<script language="Javascript1.2">
+	var botones = new Array(6);
+	botones[0] = "Imprimir";
+	botones[1] = "javascript:imprimir()";
+	botones[2] = "Volver";
+	botones[3] = "javascript:volver()";
+        botones[4] = "Salir";
+        botones[5] = "indexCiudadanoAction.do";
+	pintaBotonesContext(botones,'/Splayas');
+</script>
+
+<form name="ciudadanoZonaForm" method="POST" action="/Splayas/ciudadano/ciudadanoVerZonaAction.do;jsessionid=JRTvNGjTY6HsFhQCgvqhnwLTvDK11Rz5GLt2j8vpFPX3GpZlMCz4!328846299!-824894698" enctype="multipart/form-data">
+<input type="hidden" name="pestanya" value="1">
+<input type="hidden" name="actionProcedencia" value="">
+<input type="hidden" name="codZona" value="1760">
+<input type="hidden" name="provinciaMapa" value="">
+<input type="hidden" name="codCCAA" value="">
+<input type="hidden" name="codProvincia" value="">
+<input type="hidden" name="codMunicipio" value="">
+<input type="hidden" name="denZona" value="">
+<input type="hidden" name="codPlaya" value="">
+
+<table width="200" border="0" cellpadding="0" cellspacing="0" class="tablaformTitulo">
+  <tr>
+    <td width="20"><img src="/Splayas/images/b1.gif" width="20" height="20"></td>
+    <td width="200" class="tituloMenuActivo">Localizacion</td>
+    <td width="20"><img src="/Splayas/images/b2.gif" width="20" height="20"></td>
+    <td width="20"><img src="/Splayas/images/peston1.gif" width="20" height="20"></td>
+    <td width="200" class="tituloMenuDesActivo"><a href="javascript:enviar('2')">Playa</a></td>
+    <td width="20"><img src="/Splayas/images/peston2.gif" width="20" height="20"></td>
+    <td width="20"><img src="/Splayas/images/peston1.gif" width="20" height="20"></td>
+    <td width="200" class="tituloMenuDesActivo"><a href="javascript:enviar('3')">Muestreos</a></td>
+    <td width="20"><img src="/Splayas/images/peston2.gif" width="20" height="20"></td>
+    <td width="20"><img src="/Splayas/images/peston1.gif" width="20" height="20"></td>
+    <td width="200" class="tituloMenuDesActivo"><a href="javascript:enviar('4')">Enlaces Interés</a></td>
+    <td width="20"><img src="/Splayas/images/peston2.gif" width="20" height="20"></td>
+  </tr>
+</table>
+<script>pieTablaFina();</script>
+
+<table class="tablaform" border="0">
+   <tr>
+   	<td width="25%">&nbsp;</td>
+        <td width="25%">&nbsp;</td>
+        <td width="25%">&nbsp;</td>
+        <td>&nbsp;</td>
+   </tr>
+   <tr>
+      <td class="apartadotabla">Territorial</td>
+      	<td colspan="2">
+        
+      	</td>
+      <td valign="top" align="right"><a href="javascript:ayuda('/Splayas/html/ayuda/ayudaESP/Localizacion.htm')"><img src="/Splayas/images/iconoAyuda.gif" width="32" height="32" border="0"></a>
+      </td>
+   </tr>
+</table>
+<table class="tablaform" border="0">
+   <tr>
+   	<td width="25%">&nbsp;</td>
+        <td width="25%">&nbsp;</td>
+        <td width="25%">&nbsp;</td>
+        <td>&nbsp;</td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Comunidad Autónoma:</td>
+      <td colspan="3" class="valorCampoI">Galicia</td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Provincia:</td>
+      <td colspan="3" class="valorCampoI">Pontevedra</td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Municipio:</td>
+      <td colspan="3" class="valorCampoI">Ribadumia</td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Localidad:</td>
+      <td class="valorCampoI" colspan="3">
+         
+      </td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Isla:</td>
+      <td colspan="3" class="valorCampoI"></td>
+   </tr>
+</table>
+<script>pieTablaFina();</script>
+<script>pieTablaFinaBlanca();</script>
+<script>pieTablaFina();</script>
+<table class="tablaform" >
+   <tr>
+      <td class="apartadotabla">Características Zona Agua Baño</td>
+   </tr>
+</table>
+<table class="tablaform" >
+   <tr>
+      <td class="nombreCampoND" width="25%">Zona Agua Baño:</td>
+      
+         <td class="valorCampoI" width="25%">RIO UMIA RIBADUMIA</td>
+         <td width="25%" class="nombreCampoND">Mapa:</td>
+         <td class="valorCampoI">
+            <a class="valorCampo" href="javascript:verMapaSigpac('http://sigpac.mapa.es/fega/antiguovisor/?ube=518342.0;4706548.388349577;520342.0;4707907.611650423;29')">Mapa SIGPAC</a>
+         </td>
+      
+      
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Tipo ZB:</td>
+      <td class="valorCampoI" colspan="3">
+         Continental (Río)
+      </td>
+   <tr>
+   <tr>
+      <td class="nombreCampoND">Otras Denominaciones:</td>
+      <td class="valorCampoI" colspan="3">
+         
+            CABANELAS
+            <br>
+         
+      </td>
+   </tr>
+   
+   
+   <tr>
+      <td class="nombreCampoND" width="25%">Demarcación Hidrográfica:</td>
+      <td class="valorCampoI" width="25%">DH Galicia-Costa</td>
+      <td class="nombreCampoND" width="25%">Temporada:</td>
+      <td class="valorCampoI">
+         01/06/2011 - 30/09/2011
+      </td>
+   </tr>
+</table>
+
+<table class="tablaform" >
+   <tr>
+      <td class="nombreCampoND" width="25%">Tipo Recurso:</td>
+      <td class="valorCampoI">Rio</td>
+   </tr>
+   <tr>
+      <td class="nombreCampoND">Recurso Hídrico:</td>
+      <td class="valorCampoI">RIO UMIA</td>
+   </tr>
+</table>
+
+
+<table class="tablaform" >
+   <tr>
+      <td class="nombreCampoND" width="25%">Limitación geográfica:</td>
+      
+      
+         <td class="valorCampoI">No</td>
+      
+   </tr>
+</table>
+<table class="tablaform" border="0">
+   <tr>
+		<td class="nombreCampoND" width="25%">Perfil de las Aguas de Baño:</td>
+   		<td class="valorCampoI" >&nbsp;</td>
+   </tr>
+   
+   		<tr>
+      		<td class="valorCampoI" >
+				&nbsp;      		
+			</td>
+      		<td class="valorCampoI" >
+				<a href="javascript:descargarDatoAmbiental('[274110404144625606]_pf047_rio_umia_ribadumia_dhgaliciacosta.pdf');" class="valorCampo">RÍO UMIA, RIBADUMIA</a>      		
+			</td>      		   		
+   		</tr>
+   
+</table>
+<script>pieTablaFina();</script>
+<script>pieTablaFinaBlanca();</script>
+<script>pieTablaFina();</script>
+
+<table  border="0" class="tablaform" >
+       <tr>
+          <td class="apartadotabla" colspan="7">Puntos de Muestreo</td>
+       </tr>
+       
+              <tr>
+                  <td class="nombreCampoND" width="25%">Denominación:</td>
+                  <td class="valorCampoI" colspan="6">RIO UMIA RIBADUMIA PM1</td>
+              </tr>
+              <tr>
+                 <td class="nombreCampoND">Otras Denominaciones:</td>
+                 <td class="valorCampoI" colspan="6">
+                    
+                 </td>
+              </tr>
+              <tr>
+                  <td class="nombreCampoND" width="25%" >Ubicación:</td>
+                  <td class="valorCampoI" colspan="6">Centro</td>
+              <tr>
+                  <td class="nombreCampoND" width="25%">Coordenadas UTM</td>
+                  <td class="nombreCampoND" width="12%">X:</td>
+                  <td class="valorCampoI" width="12%">519342</td>
+                  <td class="nombreCampoND" width="12%">Y:</td>
+                  <td class="valorCampoI" width="12%">4707288</td>
+                  <td class="nombreCampoND" width="12%">Huso:</td>
+                  <td class="valorCampoI" width="12%">29</td>
+               
+                  </tr>
+                  <tr>
+                     <td width="25%" class="nombreCampoND">Mapa:</td>
+                     <td class="valorCampoI" >
+        	 	<a class="valorCampo" href="javascript:verMapaSigpac('http://sigpac.mapa.es/fega/antiguovisor/?ube=518342.0;4706608.388349577;520342.0;4707967.611650423;29')">Mapa SIGPAC</a>
+                     </td>
+                  </tr>
+               
+               <tr>
+                  <td class="nombreCampoND" width="12%">Cambios&nbsp;2010&nbsp;-&nbsp;2011:</td>
+                  
+                  
+                     <td class="valorCampoI" colspan="6">Sin cambios</td>
+                  
+               </tr>
+                
+               <tr>
+                  <td class="nombreCampoND"  width="12%">Observaciones:</td>
+                  
+               </tr>
+              
+                 </tr>
+                 <tr>
+                     <td colspan="7" >&nbsp;</td>
+              
+              </tr>
+        
+</table>
+<script>pieTabla();</script>
+</form>
+</body>
+</html>
+

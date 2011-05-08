@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>HORC.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>HORC</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>HORC</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de El Horcajo</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre el puerto de Niefla (Km. 122 de la N 420) y El Horcajo</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Ciudad Real</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6,5</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra sin acondicionar</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-4.440422,38.514299,0 -4.439795,38.51467,0 -4.43855,38.515498,0 -4.438336,38.516113,0 -4.438183,38.516418,0 -4.437897,38.516654,0 -4.43729,38.517008,0 -4.429337,38.525642,0 -4.426227,38.529068,0 -4.425912,38.529379,0 -4.425574,38.529671,0 -4.425019,38.530065,0 -4.424407,38.530415,0 -4.423519,38.530796,0 -4.422607,38.531077,0 -4.421739,38.531268,0 -4.420697,38.531362,0 -4.419928,38.531335,0 -4.419031,38.531211,0 -4.418177,38.530978,0 -4.417761,38.53082,0 -4.415351,38.529633,0 -4.414521,38.529391,0 -4.413648,38.529329,0 -4.409042,38.529628,0 -4.408517,38.52977,0 -4.408164,38.529936,0 -4.407949,38.530083,0 -4.407679,38.530329,0 -4.407367,38.530829,0 -4.407261,38.531262,0 -4.407254,38.531479,0 -4.407423,38.532486,0 -4.407418,38.532829,0 -4.407277,38.533263,0 -4.40701,38.533663,0 -4.406626,38.533983,0 -4.406183,38.534222,0 -4.405807,38.534344,0 -4.405143,38.534424,0 -4.404649,38.534385,0 -4.404291,38.534299,0 -4.40406,38.534221,0 -4.402879,38.53364,0 -4.402498,38.533527,0 -4.401958,38.533471,0 -4.400341,38.533508,0 -4.399939,38.533486,0 -4.398926,38.533318,0 -4.398568,38.533187,0 -4.398014,38.53304,0 -4.397037,38.532917,0 -4.396452,38.532924,0 -4.394975,38.533104,0 -4.393618,38.533489,0 -4.393177,38.533558,0 -4.392724,38.533563,0 -4.392276,38.533514,0 -4.391194,38.53332,0 -4.390803,38.533279,0 -4.390046,38.53327,0 -4.388724,38.533325,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>TORR.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>TORR</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>TORR</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Torrevieja</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Torrevieja y la carretera de los Montesinos (CV-945</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Alicante</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>6,7</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Asfalto y enlosado</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-0.691776,37.978796,0 -0.692422,37.979235,0 -0.693407,37.979978,0 -0.694856,37.981008,0 -0.6958760000000001,37.981966,0 -0.697457,37.984416,0 -0.697906,37.985739,0 -0.698097,37.986877,0 -0.697971,37.988458,0 -0.697612,37.990303,0 -0.6961770000000001,37.998786,0 -0.696055,38.000247,0 -0.695798,38.001258,0 -0.695736,38.003228,0 -0.696346,38.00542,0 -0.697444,38.007267,0 -0.70184,38.013356,0 -0.703213,38.014749,0 -0.706549,38.017615,0 -0.70966,38.020475,0 -0.713037,38.02352,0 -0.714136,38.024594,0 -0.715195,38.026048,0 -0.716194,38.027614,0 -0.717201,38.028932,0 -0.718745,38.030138,0 -0.719214,38.030419,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

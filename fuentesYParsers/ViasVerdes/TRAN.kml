@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>TRAN.kmz</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>TRAN</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>TRAN</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Tranqueru</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Perlora y Xivares</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Asturias</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>1,2</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Tierra acondicionada</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-5.744119,43.577555,0 -5.743982,43.577246,0 -5.743784000000001,43.577104,0 -5.743445999999999,43.576994,0 -5.742917,43.57689,0 -5.741915,43.576591,0 -5.741094,43.576266,0 -5.74073,43.576019,0 -5.739596000000001,43.575536,0 -5.738673000000001,43.575218,0 -5.738135,43.57491,0 -5.73776,43.574538,0 -5.73761,43.574282,0 -5.737347,43.573947,0 -5.737035,43.573754,0 -5.736250000000001,43.573488,0 -5.735739999999999,43.573144,0 -5.735402,43.572775,0 -5.734803000000001,43.572546,0 -5.733559,43.572372,0 -5.732704,43.572135,0 -5.732182,43.572147,0 -5.731720000000001,43.572319,0 -5.731366000000001,43.572407,0 -5.730786999999999,43.572381,0 -5.730396,43.57227,0 -5.730099,43.572013,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

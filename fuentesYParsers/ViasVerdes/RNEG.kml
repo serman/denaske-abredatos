@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>RNEG.kmz</name>
+	<Style id="LineStyle01">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc0098e6</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>RNEG</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>RNEG</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Río Negro</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Moreda y la Campueta</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Asturias</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>2</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>NO</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Zahorra compactada con riego asfáltico</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle01</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-5.726815000000001,43.166468,0 -5.726707,43.165643,0 -5.727670999999999,43.165476,0 -5.728483,43.165516,0 -5.72967,43.165754,0 -5.730372,43.166064,0 -5.731665000000001,43.166865,0 -5.732328,43.167023,0 -5.732859,43.166821,0 -5.733141,43.166356,0 -5.733552,43.165904,0 -5.735228,43.16497,0 -5.735613000000001,43.164515,0 -5.735913,43.163973,0 -5.73626,43.16358,0 -5.736407,43.16322,0 -5.736387999999999,43.162805,0 -5.736249,43.162423,0 -5.736031,43.161972,0 -5.736391,43.161055,0 -5.736411,43.16058,0 -5.736295999999999,43.15984,0 -5.735913,43.15932,0 -5.735893,43.158878,0 -5.735942,43.158277,0 -5.736091000000001,43.157976,0 -5.735521000000001,43.157011,0 -5.735382,43.156599,0 -5.73537,43.156332,0 -5.735184,43.155803,0 -5.734768,43.155575,0 -5.734157000000001,43.1555,0 -5.733535,43.155189,0 -5.733524,43.154922,0 -5.733307,43.154625,0 -5.733040000000001,43.154426,0 -5.732494999999999,43.154297,0 -5.732266999999999,43.154049,0 -5.732298,43.153794,0 -5.732575999999999,43.15367,0 -5.733356,43.153786,0 -5.733641,43.153994,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>

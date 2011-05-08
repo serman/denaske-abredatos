@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>POBL.kml</name>
+	<Style id="LineStyle00">
+		<LabelStyle>
+			<color>00000000</color>
+			<scale>0</scale>
+		</LabelStyle>
+		<LineStyle>
+			<color>cc00a838</color>
+			<width>7</width>
+		</LineStyle>
+	</Style>
+	<Placemark>
+		<name>POBL</name>
+		<Snippet maxLines="0"></Snippet>
+		<description><![CDATA[<html xmlns:fo="http://www.w3.org/1999/XSL/Format">
+
+<body>
+
+<table border="1" width="350" cellpadding="5" cellspacing="0">
+
+<tr bgcolor="#fd9b00">
+
+<th width="35&#37;" align="left"> </th>
+
+<th width="50&#37;" align="left"> </th>
+
+</tr>
+
+<tr>
+
+<td>COD_VV</td>
+
+<td>POBL</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Nombre</td>
+
+<td>V.V. de Poblete</td>
+
+</tr>
+
+<tr>
+
+<td>Recorrido</td>
+
+<td>Entre Ciudad Real y Poblete</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Provincia</td>
+
+<td>Ciudad Real</td>
+
+</tr>
+
+<tr>
+
+<td>Longitud en km</td>
+
+<td>5</td>
+
+</tr>
+
+<tr bgcolor="#b3d306">
+
+<td>Acondicionada</td>
+
+<td>SI</td>
+
+</tr>
+
+<tr>
+
+<td>Tipo de firme</td>
+
+<td>Asfalto y tierra compactada</td>
+
+</tr>
+
+</table><br></body>
+
+</html>]]></description>
+		<styleUrl>#LineStyle00</styleUrl>
+		<MultiGeometry>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+-3.938917,38.974346,0 -3.939636,38.973256,0 -3.9402,38.972248,0 -3.947392,38.958256,0 -3.948435,38.956316,0 -3.948671,38.955742,0 -3.948846,38.955144,0 -3.948926,38.954285,0 -3.948889,38.953737,0 -3.948666,38.953072,0 -3.948256,38.952098,0 -3.947882,38.951528,0 -3.947355,38.950888,0 -3.946859,38.950392,0 -3.946056,38.949731,0 -3.944947,38.948906,0 -3.944513,38.94848,0 -3.944016,38.947817,0 -3.943641,38.947223,0 -3.943417999999999,38.94651,0 -3.943317,38.945771,0 -3.943331000000001,38.944532,0 -3.943474999999999,38.943839,0 -3.944031,38.942047,0 -3.944204,38.941282,0 -3.944283,38.940351,0 -3.944541,38.939015,0 -3.944983,38.93789,0 -3.945882,38.936643,0 -3.948016,38.934051,0 -3.949944,38.932152,0 -3.951263,38.930353,0 -3.952166,38.929368,0 </coordinates>
+			</LineString>
+		</MultiGeometry>
+	</Placemark>
+</Document>
+</kml>
