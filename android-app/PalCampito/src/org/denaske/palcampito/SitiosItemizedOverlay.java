@@ -2,7 +2,9 @@ package org.denaske.palcampito;
 
 import java.util.ArrayList;
 
+import org.denaske.palcampito.base.AppConfig;
 import org.denaske.palcampito.base.MyOverlayItem;
+import org.denaske.palcampito.ui.MyCustomDialog;
 import org.denaske.palcampito.ui.NodeDetailActivity;
 import org.denaske.palcampito.ui.PhotoCaptureActivity;
 
@@ -23,6 +25,8 @@ import com.google.android.maps.MapView;
 public class SitiosItemizedOverlay extends ItemizedOverlay {
 
 	Context mContext;
+	MyCustomDialog myCustomDialog;
+
 	private ArrayList<MyOverlayItem> mOverlays = new ArrayList<MyOverlayItem>();
 
 	public SitiosItemizedOverlay(Context c, Drawable defaultMarker) {
@@ -30,8 +34,8 @@ public class SitiosItemizedOverlay extends ItemizedOverlay {
 		super(boundCenterBottom(defaultMarker));
 
 		mContext = c;
-
-	} 
+		myCustomDialog = new MyCustomDialog(mContext);
+	}
 
 	public void addOverlay(MyOverlayItem overlay) {
 		mOverlays.add(overlay);
@@ -60,48 +64,54 @@ public class SitiosItemizedOverlay extends ItemizedOverlay {
 	@Override
 	protected boolean onTap(int index) {
 		MyOverlayItem item = mOverlays.get(index);
-		final String nid = item.getNid(); 
-		
-		Log.d(MyApp.TAG, "nid" + nid); 
-		
+		final String nid = item.getNid();
+
+		Log.d(MyApp.TAG, "nid" + nid);
+
 		GeoPoint g = item.getPoint();
 
-		AlertDialog.Builder dialog = new AlertDialog.Builder(mContext); 
-		dialog.setIcon(mContext.getResources().getDrawable(R.drawable.ic_menu_view)); 
-	
+		AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
+		dialog.setIcon(mContext.getResources().getDrawable(R.drawable.ic_menu_view));
+
 		dialog.setNegativeButton(R.string.volver, new OnClickListener() {
 
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 
 			}
-		}); 
-		
-		dialog.setPositiveButton(R.string.vermas, new OnClickListener() {
+		});
 
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				mContext.startActivity(new Intent(mContext, NodeDetailActivity.class)); 
-			}
-		}); 
-		
+		// dialog.setPositiveButton(R.string.vermas, new OnClickListener() {
+		//
+		// @Override
+		// public void onClick(DialogInterface dialog, int which) {
+		// mContext.startActivity(new Intent(mContext,
+		// NodeDetailActivity.class));
+		// }
+		// });
+
 		dialog.setNeutralButton(R.string.anyadir, new OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				//mContext.startActivity(new Intent(mContext, PhotoCaptureActivity.class)); 
-				
-				Bundle bundle = new Bundle();
-				bundle.putString("param1", nid); 
+				// mContext.startActivity(new Intent(mContext,
+				// PhotoCaptureActivity.class));
 
-				Intent newIntent = new Intent(mContext, PhotoCaptureActivity.class); 
-				newIntent.putExtras(bundle);
-				mContext.startActivity(newIntent); 
-				
-			} 
+				if (AppConfig.logged == 1) {
 
+					Bundle bundle = new Bundle();
+					bundle.putString("param1", nid);
 
-		}); 
+					Intent newIntent = new Intent(mContext, PhotoCaptureActivity.class);
+					newIntent.putExtras(bundle);
+					mContext.startActivity(newIntent);
+				} else { 
+					myCustomDialog.show(); 
+				}
+
+			}
+
+		});
 
 		dialog.setCancelable(true);
 
@@ -116,10 +126,9 @@ public class SitiosItemizedOverlay extends ItemizedOverlay {
 	public boolean onTap(GeoPoint p, MapView mapView) {
 		// MyMapActivity.showDialog(mapView);
 		// mContext.startActivity(new Intent(mContext,
-		// NodeDetailActivity.class)); 
-		// mapView. 
-	
-		
+		// NodeDetailActivity.class));
+		// mapView.
+
 		return super.onTap(p, mapView);
 	}
 

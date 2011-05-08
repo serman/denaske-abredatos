@@ -4,9 +4,9 @@ import java.util.Iterator;
 
 import org.denaske.palcampito.R;
 import org.denaske.palcampito.ui.ManualActivity;
+import org.denaske.palcampito.ui.PreferencesActivity;
 import org.denaske.palcampito.ui.PreviewActivity;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Criteria;
@@ -21,9 +21,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.maps.MapActivity;
@@ -46,8 +44,8 @@ public abstract class MapBaseActivity extends MapActivity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 
-		entrar(); 
-		
+		// entrar();
+
 		initGPS();
 	}
 
@@ -64,7 +62,7 @@ public abstract class MapBaseActivity extends MapActivity {
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) { 
+	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.menu, menu);
 		// menu.getItem(R.id.stop).setVisible(false);
@@ -78,8 +76,7 @@ public abstract class MapBaseActivity extends MapActivity {
 		switch (item.getItemId()) {
 
 		case R.id.menu_preferencias:
-			// startActivity(new Intent(getApplicationContext(),
-			// WActivity.class));
+			startActivity(new Intent(getApplicationContext(), PreferencesActivity.class));
 
 			return true;
 
@@ -91,16 +88,16 @@ public abstract class MapBaseActivity extends MapActivity {
 			// intent.setData(Uri.parse("android.resource://" + getPackageName()
 			// + "/raw/cityfireflies.mov"));
 
-			return true; 
-			
+			return true;
+
 		case R.id.menu_iraweb:
-			
+
 			startActivity(new Intent(getApplicationContext(), PreviewActivity.class));
 			// Intent intent1 = new
 			// Intent("net.sweetmonster.android.app.cityfireflies.ui.VideoViewActivity");
 			// intent.setData(Uri.parse("android.resource://" + getPackageName()
 			// + "/raw/cityfireflies.mov"));
-			
+
 			return true;
 
 		default:
@@ -255,46 +252,7 @@ public abstract class MapBaseActivity extends MapActivity {
 	}
 
 	public boolean onTouchEvent(MotionEvent event, MapView mapView) {
-		Log.d("qq", "qq"); 
+		Log.d("qq", "qq");
 		return false;
-	} 
-	
-	
-	public void entrar() {
-	    Dialog alert = new Dialog(this);  
-
-	    alert.setTitle(R.string.login); 
-
-	    alert.setContentView(R.layout.login);
-	    
-	    Button aceptar = (Button) findViewById(R.id.aceptar); 
-	    Button cancelar = (Button) findViewById(R.id.cancelar);
-	    
-	    /* 
-	    aceptar.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				//Toast.makeText(getApplicationContext(), "hola", Toast.LENGTH_LONG); 
-				
-			}
-		}); 
-		*/ 
-	    
-	    /* 
-	    aceptar.setOnClickListener(new OnClickListener() {
-			
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				
-			}
-		}); 
-		*/ 
-
-	    //cancelar.setOnClickListener();
-
-	    alert.show();
 	}
-
-
 }

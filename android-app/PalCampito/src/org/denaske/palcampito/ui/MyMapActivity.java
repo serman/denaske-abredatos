@@ -115,17 +115,6 @@ public class MyMapActivity extends MapBaseActivity implements ILocation {
 		}); 
 	
 
-		chart = new ActionItem();
-		
-		chart.setTitle("Anyadir foto");
-		chart.setIcon(getResources().getDrawable(R.drawable.ic_menu_camera));
-		chart.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Toast.makeText(mActivity, "Chart selected" , Toast.LENGTH_SHORT).show();
-			}
-		});
-	
 
 			
 		mapController = mapView.getController();

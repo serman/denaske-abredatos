@@ -1,6 +1,8 @@
 package org.denaske.palcampito.ui;
 
 
+import org.denaske.palcampito.R;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,7 +21,7 @@ public class BootScreenActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
-		//setContentView(R.layout.bootscreen);
+		setContentView(R.layout.bootscreen);
 		// Runnable exiting the splash screen and launching the menu
 
 		_exitRunnable = new Runnable() {

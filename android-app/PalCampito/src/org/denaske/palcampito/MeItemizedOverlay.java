@@ -2,6 +2,7 @@ package org.denaske.palcampito;
 
 import java.util.ArrayList;
 
+import org.denaske.palcampito.base.AppConfig;
 import org.denaske.palcampito.ui.NodeDetailActivity;
 import org.denaske.palcampito.ui.PhotoCaptureActivity;
 
@@ -73,13 +74,13 @@ public class MeItemizedOverlay extends ItemizedOverlay {
 			}
 		}); 
 		
-		dialog.setPositiveButton(R.string.chekin, new OnClickListener() {
-
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				mContext.startActivity(new Intent(mContext, NodeDetailActivity.class)); 
-			}
-		}); 
+//		dialog.setPositiveButton(R.string.chekin, new OnClickListener() {
+//
+//			@Override
+//			public void onClick(DialogInterface dialog, int which) {
+//				mContext.startActivity(new Intent(mContext, NodeDetailActivity.class)); 
+//			}
+//		}); 
 
 		dialog.setCancelable(true);
 

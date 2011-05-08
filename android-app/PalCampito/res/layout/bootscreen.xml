@@ -1,11 +1,21 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
+	<LinearLayout android:background="#FFFFFFFF"
+	android:layout_width="fill_parent" android:id="@+id/image1"
+	android:layout_height="fill_parent" android:scaleType="centerCrop"
+	android:layout_gravity="center_vertical">
+
+	
 	<ImageView 
-		android:src="@drawable/icon"
+		android:src="@drawable/logo" 
+		android:layout_margin="5dp" 
 		android:layout_width="wrap_content"
 		android:id="@+id/image1"
 		android:layout_height="wrap_content"
-		android:scaleType="centerCrop">
-	</ImageView>
+		android:scaleType="centerCrop"
+		android:gravity="center" android:layout_gravity="center">
+	</ImageView> 
+	
+	</LinearLayout>
 
 </merge> 

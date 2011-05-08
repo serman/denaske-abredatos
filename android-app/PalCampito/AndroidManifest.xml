@@ -46,6 +46,9 @@
 		<activity android:name=".ui.RecommendationMapActivity"> 
 		</activity> 
 		
+		<activity android:name=".ui.PreferencesActivity"> 
+		</activity> 
+		
 		<service android:name=".ServerService" />
 		<service android:name=".SensorService" /> 
 		
