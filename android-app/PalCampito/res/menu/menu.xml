@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"> 
+
+	<item android:id="@+id/menu_preferencias" android:title="@string/preferencias" 
+	android:icon="@drawable/ic_menu_preferences" /> 
+	
+
+	<item android:id="@+id/menu_iraweb" android:title="@string/iraweb" 
+	android:icon="@drawable/ic_menu_globe" /> 
+	
+	<item android:id="@+id/menu_about" android:title="@string/about" 
+	android:icon="@drawable/ic_menu_allfriends" /> 
+	
+</menu> 

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/mainview"
+	android:orientation="vertical"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	<!-- 
+
+	<ViewFlipper android:id="@+id/flipper"
+		android:layout_width="fill_parent" 
+		android:layout_height="fill_parent"
+		android:layout_weight="1">
+		<include android:id="@+id/camerapreview" layout="@layout/c_camerapreview" />
+		<include android:id="@+id/direccion" layout="@layout/direccion" />
+	</ViewFlipper>
+
+
+	-->
+
+	<include android:id="@+id/cab"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		layout="@layout/c_cabecera" />
+	
+
+	<ImageView android:src="@drawable/nofoto"
+		android:id="@+id/image" 
+		android:scaleType="fitCenter" 
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_weight = "1" 
+		/> 
+			
+	
+	<TextView android:text="Comentario"
+		android:id="@+id/textView1"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
+	</TextView>
+	
+	<EditText 
+		android:layout_width="fill_parent"
+		android:id="@+id/editTextComment"
+		android:text=""
+		android:hint="Escribe aqui tu comentario" 
+		android:layout_height="wrap_content">
+	</EditText>
+	
+	<RadioGroup android:id="@+id/radioGroup1"
+		 android:layout_width="fill_parent"
+		 android:layout_height="wrap_content"
+		 android:orientation="horizontal">
+		<RadioButton 
+			android:layout_height="wrap_content"
+			android:tag="megusta"
+			android:id="@+id/radio0" android:text="Me gusta"
+			android:layout_width="wrap_content" 
+			android:layout_weight="1" 
+			android:checked="true"
+			>
+		</RadioButton>
+		<RadioButton 
+			android:layout_height="wrap_content"
+			android:tag="nomegusta"
+			android:id="@+id/radio1"
+			android:text="No me gusta"
+			android:layout_width="wrap_content" 
+			android:layout_weight="1" 
+			android:checked="false" 
+			>
+		</RadioButton>
+	</RadioGroup>
+		
+		
+		
+		
+	<LinearLayout android:id="@+id/ll2" android:orientation="horizontal"
+		android:background="#88000000" android:layout_width="fill_parent"
+		android:layout_height="wrap_content">
+
+		<Button android:id="@+id/buttonP" android:layout_width="0px"
+			android:layout_weight="1" android:layout_height="wrap_content"
+			android:text="Hacer foto" />
+
+
+		<Button android:id="@+id/buttonN" android:layout_width="0px"
+			android:layout_weight="1" android:layout_height="wrap_content"
+			android:enabled="true" android:text="Enviar" />
+
+	</LinearLayout> 
+	
+
+
+</LinearLayout>

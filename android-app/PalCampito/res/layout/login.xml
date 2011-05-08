@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/mainview" android:orientation="vertical"
+	android:layout_width="252dp" android:layout_height="fill_parent">
+
+
+
+	<LinearLayout 
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" 
+		android:padding="25dp"
+		android:layout_weight="1"
+		android:orientation="vertical">
+
+
+		<TextView
+			android:id="@+id/field1"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/usuario" 
+			android:padding="5dp" />
+
+		<EditText
+			android:text=""
+			android:hint="@string/usuario_explicacion" 
+			android:id="@+id/login_usuario"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"></EditText>
+	
+
+		<TextView android:id="@+id/field2"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/contrasenya"
+			android:padding="5dp" />
+
+		<EditText
+			android:text=""
+			android:hint="@string/contrasenya_explicacion" 
+		 	android:id="@+id/login_contrasenya"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"></EditText> 
+			
+		<LinearLayout android:layout_height="wrap_content" android:padding="15dp" android:layout_width="fill_parent" android:id="@+id/linearLayout1" android:gravity="right|center_vertical">
+			<Button android:text="@string/aceptar" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/aceptar"></Button>
+			<Button android:text="@string/cancelar" android:id="@+id/cancelar" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+		</LinearLayout>
+
+
+
+	</LinearLayout>
+
+
+</LinearLayout>

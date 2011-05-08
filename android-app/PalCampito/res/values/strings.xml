@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">Pal Campito</string> 
+    <string name="splash_screen">SplashScreen</string>
+
+	<!-- tab --> 
+	<string name="lista">Lista</string> 
+	<string name="denunciar">Denunciar</string> 
+	<string name="misnotas">Mis notas</string> 
+	<string name="mialrededor">Mapa</string> 
+	<string name="otro">otro</string> 
+
+	<string name="denunciar_explicacion">Si ves algo que te gusta o no enseñaselo al mundo</string> 
+	<string name="mialrededor_explicacion">otro</string> 
+
+	<!-- menu --> 
+	<string name="about">Acerca de</string> 
+	<string name="preferencias">Preferencias</string> 
+	<string name="iraweb">Ir a web</string> 
+	
+	<!-- menu --> 
+	<string name="iamhere">¡Estoy aquí!</string> 
+	<string name="iamhereinfo">Pulsa sobre otros iconos para ver contenido</string> 
+	
+	<string name="gpscenteringinfo">Centrando</string> 
+	
+	<string name="vermas">Ver más</string> 
+	<string name="anyadir">Dejar comentario/protesta</string> 
+	<string name="volver">Volver</string> 
+	
+	<string name="chekin">Dejar comentario/protesta</string> 
+	<string name="chekin_explanation">Comenta qué cosas te gustan o no del lugar en el que te encuentras. Comentarios y propuestas son bienvenidas </string> 
+	
+	<string name="takepic">Hacer foto</string> 
+	<string name="takepic_again">Volver a hacer foto</string> 
+	<string name="enviar">Enviar</string> 
+	
+	<string name="upload_pic_wait">Enviando foto...</string> 
+	
+	<!-- usuario / contrasenya --> 
+	<string name="usuario">Usuario</string> 
+	<string name="contrasenya">Contraseña</string> 
+	<string name="usuario_explicacion">Usuario</string> 
+	<string name="contrasenya_explicacion">Contraseña</string> 
+	<string name="aceptar">Entrar</string> 
+	<string name="cancelar">Cancelar</string> 
+	
+    <string name="login">Entra para comentar</string> 
+    
+    <string name="explora">¡Explora!</string> 
+    <string name="explora_explanation">¡Agita el móvil para explorar!</string> 
+    
+    
+</resources> 

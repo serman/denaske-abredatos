@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:background="#88000000" android:layout_width="fill_parent"
+	android:layout_height="fill_parent" android:orientation="horizontal"> 
+
+	<ImageView android:src="@drawable/ic_menu_camera" 
+		android:padding="2dp"
+		android:layout_width="wrap_content"
+		android:layout_height="fill_parent"> 
+	</ImageView>
+
+
+	<TextView android:id="@+id/textCabecera"
+		android:text="@string/denunciar_explicacion" 
+		android:textSize="15dp"
+		android:layout_width="fill_parent" 
+		android:layout_height="fill_parent"
+		android:gravity="center_vertical"> 
+	</TextView> 
+
+</LinearLayout> 
