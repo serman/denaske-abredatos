@@ -8,7 +8,7 @@ body {
 
 body.drupal{
   
-  background:#ffffff;
+ /* background:#ffffff;*/
   
   
 }
@@ -50,7 +50,7 @@ body {
 
 }
 
-body.front{
+body{
     	background-image:url('../img/body_background-03.png');
 	background-repeat:repeat-x;
 	background-position:center top;
@@ -150,7 +150,11 @@ body.front{
 /-------------------------------------------------------------- */
 /* Add general styles for primary menu here, such as typography, borders, floats,
   or spacing above/below */
-.primary-menu {
+#primary-menu {
+  
+  float:right;
+  width:495px;
+  
 }
 
 /* styles for Superfish primary menu */
@@ -158,17 +162,30 @@ body.front{
 }
 
 /* Link style for top level menu items, add padding here */
-.primary-menu-inner ul.sf-menu a,
-.primary-menu-inner ul.sf-menu a:visited  {
+.primary-menu-inner ul.sf-menu a{
+  
+  padding:10px;
+  background:#4D4D4D;
+  color:#fff;
+  font-size:16px;
+  -moz-border-radius:10px;
+  -webkit-border-radius:10px;
+  border-radius:10px;
+  
 }
 
 .primary-menu-inner ul.sf-menu a:hover,
-.primary-menu-inner ul.sf-menu a:active,
 .primary-menu-inner ul.sf-menu a:focus {
+  
+  background:#000;
+  
 }
 
 /* These are the top level menu items, add border-right here for separators */
 .primary-menu-inner ul.sf-menu li {
+  
+  margin:0 10px 0 0;
+  
 }
 
 /* Add border-right: 0; here to remove separator on last menu item */
@@ -269,7 +286,8 @@ body.front{
 /*  Main Area (content + sidebars + preface bottom + postscript top)
 -------------------------------------------------------------- */
 .main-wrapper {
-padding-top: 240px;
+/*padding-top: 240px;*/
+padding-top:120px;
 }
 
 
@@ -1231,3 +1249,94 @@ div.homepage{
 color: #005E5F;
 font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.fondo-tipo{
+  
+  font-size:16px;
+  border-bottom:1px dashed #ccc;
+  padding-bottom:3px;
+  margin-bottom:3px;
+  
+}
+
+
+#block-ajax_register-0{
+  
+  float:right;
+
+  padding:5px;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  font-weight:bold;
+  font-size:16px;
+}
+
+#block-ajax_register-0 a{
+  
+  background:#000;
+  padding:5px;
+  margin:0 5px;
+  
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  
+  
+}
+
+
+
+#block-ajax_register-0 p,
+#block-ajax_register-0 br{
+  
+  display:inline;
+  padding:0 5px 0 0;
+  
+}
+
+#block-ajax_register-0 br{
+  
+  display:none;
+  
+}
+
+
+#TB_window .registro {
+width: 650px;
+margin-top: 20px;
+margin-bottom: 22px;
+overflow: hidden;
+}
+
+#TB_window .login {
+width: 270px;
+margin-left: 18px;
+padding-right: 20px;
+border-right: 2px solid #913228;
+clear: none;
+float: left;
+}
+
+#TB_window .recover {
+width: 301px;
+float: right;
+clear: none;
+margin-right: 25px;
+}
+
+ #TB_window {
+-webkit-border-radius: 5px;
+-moz-border-radius: 5px;
+border-radius: 5px;
+border: 3px solid #913228;
+background-color: #913228;
+}
+#TB_ajaxContent, #TB_window {
+/*width: auto !important;*/
+height: auto !important;
+}
+
+
+

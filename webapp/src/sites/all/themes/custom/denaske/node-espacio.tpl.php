@@ -1,6 +1,6 @@
 <?php
 
-dpm($node,'node');
+//dpm($node,'node');
 
 ?>
 
@@ -106,12 +106,19 @@ dpm($node,'node');
     
 <? }else{//teaser ?>
 
-<div id="map-teaser"></div>
+<div class="espacio-teaser">
 
-    <?php if ($page == 0): ?>
-    <h2 class="title"><a href="<?php print $node_url ?>" title="<?php print $title ?>"><?php print $title ?></a></h2>
-    <?php endif; ?>
+<div class="map-teaser">
+  <?php print $node->content['mapas']['#value']; ?>
+</div>
 
+<div class="content">
+     <h2 class="title"><a href="<?php print $node_url ?>" title="<?php print $title ?>"><?php print $title ?></a></h2>
+     <?php print $node->content['body']['#value']; ?>
+  
+</div>
+
+</div>
 
 
 

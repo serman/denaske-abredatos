@@ -10,7 +10,7 @@
 function mapas_menu() { 
   // This is the minimum information you can provide for a menu item.
   $items['busca'] = array(
-    'title' => 'Donde vas a pasar tu día de campo ?',
+    'title' => '¿Dónde vas a pasar tu día de campo ?',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('busca_principal'),
     'access arguments' => array('access content'),
@@ -38,7 +38,7 @@ function busca_principal(){
   $form['ciudad'] = array(
     '#type' => 'textfield',
     //'#title' => 'Introduce una ciudad',
-    '#hint' => 'Localización, codigo postal ...',
+    '#hint' => 'Nombre de ciudad, pueblo, lugar ...',
     '#required' => TRUE,
     '#size' => '40',
   );
@@ -48,7 +48,6 @@ function busca_principal(){
     //'#title' => 'Introduce la distancia',
     //'#default_value' => '100',
     '#field_suffix' => 'KLM',
-    '#attributes' => array('class' => 'texto-entrada'),
     '#hint' => 'Introduce una distancia aproximada',
     '#required' => TRUE,
     '#size' => '40',

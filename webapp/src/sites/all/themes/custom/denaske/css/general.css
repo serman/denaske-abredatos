@@ -78,16 +78,17 @@ background:url('../img/search.png') no-repeat 0 0;
   overflow: visible;
 }
 
-#map-teaser{
+
+#pid-busca #content-inner-inner h1{
   
-  border:1px solid #ccc;
-  width:200px;
-  height:200px;
-  margin:10px;
-  
+  text-align:center;
   
 }
 
-
+#busca-principal{
+  
+  text-align:center;
+  
+}
 
 

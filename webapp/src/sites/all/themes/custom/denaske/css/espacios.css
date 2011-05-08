@@ -113,10 +113,30 @@ padding:5px;
     
 }
 
+.espacio-teaser{
+    
+    clear:both;
+    
+}
 
 
+.espacio-teaser .map-teaser{
+  
+  border:1px solid #ccc;
+  width:200px;
+  height:200px;
+  margin:0 10px 0 0;
+  float:left;
+  overflow:hidden;
+  
+}
 
-
+.espacio-teaser .content{
+    
+    float:right;
+    width:700px;
+    
+}
 
 
 
