@@ -1,0 +1,157 @@
+<?php
+//$Id: ajax_register.module,v 1.1.2.1 2009/06/07 18:39:03 compujohnny Exp $
+ /*
+  * @file
+  * This module provides a block with 2 links (Login, Register) for the anonymous user
+  * When the user clicks on Login or register the requested form appears in a nice ajax popup
+  * The login and register forms can validate using ajax and not redirect on error
+  * On success the module redirects to the user page
+  * When user is logged in, the block provides a Welcome !username message and a link to the user page
+  * and a logout link.
+  */
+
+/*
+ * Implementing hook_init
+ */
+function ajax_register_init() {
+  //Declare the thickbox image path
+  $path = 'var tb_pathToImage ="'. drupal_get_path('module', 'ajax_register') .'/images/loading.gif";';
+  drupal_add_js($path, 'inline');
+  drupal_add_js(drupal_get_path('module', 'ajax_register') ."/thickbox.js");
+  drupal_add_css(drupal_get_path('module', 'ajax_register') ."/thickbox.css");
+}
+
+ /*
+  * Implementing hook_block
+  */
+
+function ajax_register_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+  $blocks[0] = array(
+  'info' => t('Ajax login/register'),
+  );
+  return $blocks;
+  }
+  if ($op == 'view') {
+  if ($delta == 0) {
+  $block['subject'] = t('Ajax Login/Register');
+  $block['content'] = ajax_get_login_block_content();
+  return $block;
+  }
+  }
+}
+
+ /*
+  * Implementing hook_menu
+  */
+function ajax_register_menu() {
+$items = array();
+$items['ajax_register/login'] = array(
+  'title' => t('Ajax register login'),
+  'page callback' => 'ajax_register_get_ajax_login_form',
+  'access arguments' => array('access content'),
+  'type' => MENU_CALLBACK,
+);
+$items['ajax_register/register'] = array(
+  'title' => t('Ajax register sign up'),
+  'page callback' => 'ajax_register_get_ajax_register_form',
+  'access arguments' => array('access content'),
+  'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+ /*
+  * Implementing hook_form_alter
+  */
+
+function ajax_register_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'user_login') {
+  //Set form to work with ajax
+  $form['#ajax'] = array(
+  'enabled' => TRUE
+  );
+  }
+  else if ($form_id == 'user_register') {
+  //Set form to work with ajax
+  $form['#ajax'] = array(
+  'enabled' => TRUE
+  );
+  }
+  else if ($form_id == 'user_pass') {
+  //Set form to work with ajax
+  $form['#ajax'] = array(
+  'enabled' => TRUE
+  );
+  }
+}
+
+function ajax_get_login_block_content() {
+  global $user;
+  $user_uri = theme('my_account_link', array());
+  $login_uri = theme('user_login_link', array(), array());
+  $register_uri = theme('user_register_link', array(), array());
+  $logout_uri = theme('user_logout_link', array());
+  if (user_is_anonymous()){
+    $block_content = "<div id='ajax_register_block_anonymous'>". $login_uri ."<br/>". $register_uri ."</div>";
+    return $block_content;
+  }
+  else{
+    $block_content = "<div id='ajax_register_block_authenticated'><p>".t("Welcome: ")."<span class='ajax_register_user_name'>". theme('username', $user) ."</span></p>". $user_uri ."<br/>". $logout_uri ."</div>";
+    return $block_content;
+  }
+}
+
+function ajax_register_get_ajax_login_form() {
+  //prints the html of the form to the ajax url request
+  module_load_include('inc', 'user', 'user.pages');
+  $login = drupal_get_form('user_login');
+  $pass  = drupal_get_form('user_pass');
+  $forgot_title = t('Forgot Your Password');
+  print $login.'<br /><div><h3>'.$forgot_title.'</h3></div>'.$pass;
+}
+
+function ajax_register_get_ajax_register_form() {
+  //prints the html of the form to the ajax url request
+  print drupal_get_form('user_register');
+}
+
+function ajax_register_theme($existing, $type, $theme, $path) {
+  return array(
+      'user_login_link' => array(
+      'arguments' => array('attributes' => array(), 'query' => array()),
+    ),
+      'user_register_link' => array(
+      'arguments' => array('attributes' => array(), 'query' => array()),
+    ),
+      'user_logout_link' => array(
+      'arguments' => array('attributes' => array()),
+    ),
+      'my_account_link' => array(
+      'arguments' => array('attributes' => array()),
+    ),
+      );
+}
+
+function theme_user_login_link($attributes, $query){
+$attributes['class'] = $attributes['class'].' thickbox';
+$login_uri = l(t('Login'), 'ajax_register/login',array('attributes'=>$attributes, 'query'=>$query));
+return $login_uri;
+}
+
+function theme_user_register_link($attributes, $query){
+$attributes['class'] = $attributes['class'].' thickbox';
+$register_uri = user_register_access()? l(t('Register'), 'ajax_register/register',array('attributes'=>$attributes, 'query'=>$query)) : '';
+return $register_uri;
+}
+
+function theme_user_logout_link($attributes){
+$logout_uri = l(t('Logout'),'logout', array('attributes'=>$attributes));
+return $logout_uri;
+}
+
+function theme_my_account_link($attributes){
+global $user;
+$user_uri = l(t('My Account'),'user/'.$user->uid, array('attributes'=>$attributes));
+return $user_uri;
+}

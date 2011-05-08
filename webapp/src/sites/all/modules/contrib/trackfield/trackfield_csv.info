@@ -1,0 +1,14 @@
+name = Track CSV
+description = "Allows trackfield to interprit data in comma separated value lists."
+core = 6.x
+version = "6.x-0.5-dev"
+dependencies[] = content
+dependencies[] = trackfield
+package = CCK
+
+; Information added by drupal.org packaging script on 2009-06-07
+version = "6.x-1.0"
+core = "6.x"
+project = "trackfield"
+datestamp = "1244383562"
+

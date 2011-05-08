@@ -1,0 +1,12 @@
+name = Conditional Fields
+description = Content fields and groups visibility based on the values of user defined 'trigger' fields.
+dependencies[] = content
+package = CCK
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-02-25
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "conditional_fields"
+datestamp = "1298619012"
+

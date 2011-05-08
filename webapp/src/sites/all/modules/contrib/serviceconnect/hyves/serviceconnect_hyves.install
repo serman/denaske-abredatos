@@ -1,0 +1,137 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function serviceconnect_hyves_install() {
+  drupal_install_schema('serviceconnect_hyves');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function serviceconnect_hyves_uninstall() {
+  drupal_uninstall_schema('serviceconnect_hyves');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function serviceconnect_hyves_schema() {
+  $schema = array();
+  
+  $schema['serviceconnect_hyves_auth_session'] = array(
+    'fields' => array(
+      'sid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE, // Use 0 for anonymouse
+      ),
+      'link' => array(
+        'type' => 'int', // 0 for normal login, 1 for link Hyves to user
+        'size' => 'tiny',
+        'not NULL' => TRUE,
+      ),
+      'phase' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+        'default' => 1,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'token_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'service_uid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'expires' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => FALSE,
+      ),
+      'timestamp_difference' => array(
+        'type' => 'int',
+        'size' => 'small',
+      ),
+    ),
+    'primary key' => array('sid')
+  );
+  
+  $schema['serviceconnect_user_hyves'] = array(
+    'fields' => array(
+      'scpid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'token_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'firstname' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'lastname' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'gender' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'birthday' => array(
+        'type' => 'varchar',
+        'length' => 10,
+        'not NULL' => TRUE,
+      ),
+      'profilepicture_mediaid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'friendscount' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'accepted_terms' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('scpid'),
+  );
+  
+  return $schema;
+}

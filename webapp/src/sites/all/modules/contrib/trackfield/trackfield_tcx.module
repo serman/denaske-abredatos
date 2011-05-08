@@ -1,0 +1,92 @@
+<?php
+
+/*
+ * Types of input we understand.
+ */
+
+DEFINE('DATASET_TCX', 'tcx');
+
+function trackfield_tcx_trackfield_valuetypes() {
+  return array(
+    DATASET_TCX => t('TCX'),
+  );
+}
+
+function _trackfield_tcx_setcsv(&$item) {
+  $new_value = FALSE;
+  $doc = new DomDocument;
+  if ($doc->loadXML($item['value'])) {
+    $tmp = $doc->getElementsByTagName('TrainingCenterDatabase');
+    if ($tmp->length) {
+      $tmp = $doc->getElementsByTagName('Activities');
+    }
+    if ($tmp->length) {
+      $tmp = $doc->getElementsByTagName('Activity');
+    }
+    if ($tmp->length) {
+      $pointname = 'Trackpoint';
+      $point_list = $tmp->item(0)->getElementsByTagName($pointname);
+      $point = $point_list->item(0);
+      $lp = 0;
+      while ($point) {
+        $lat = trim($point->getElementsByTagName('LatitudeDegrees')->item(0)->nodeValue);
+        $lon = trim($point->getElementsByTagName('LongitudeDegrees')->item(0)->nodeValue);
+        /* Only add point if lat/lon given */
+        if (is_numeric($lat) && is_numeric($lon)) {
+          $alt = trim($point->getElementsByTagName('AltitudeMeters')->item(0)->nodeValue);
+          $tmp = trim($point->getElementsByTagName('HeartRateBpm'));
+          if ($tmp->length) {
+            $val = trim($tmp->item(0)->getElementsByTagName('Value')->item(0)->nodeValue);
+            /* 255 == invalid value - just use the last good one for now. */
+            if ($val != 255) {
+              $hrt = $val;
+            }
+          }
+          
+          /* Convert time into number of seconds since start */
+          $tim = trim($point->getElementsByTagName('Time')->item(0)->nodeValue);
+          if ($tim) {
+            $tim = strtotime($tim);
+            if (!isset($csv)) { $tim_base = $tim; }
+            $tim = $tim - $tim_base;
+          }
+
+          if (isset($csv)) { $csv .= ' '; }
+          $csv .= "$lon,$lat,$alt,$tim,$hrt";
+        }
+
+        /* Move to next point of interest in the list */
+        do {
+          $point = $point->nextSibling;
+        } while ($point && $point->nodeName != $pointname);
+      }
+
+      $new_value = $csv;
+      $item['valuetype'] = DATASET_LONLATALT;
+    }
+  }
+//  watchdog('trackfield_tcx', sprintf('Done, data is now %d bytes', strlen($new_value)));
+//  print $new_value; exit;
+  $item['value'] = &$new_value;
+}
+
+function trackfield_tcx_trackfield_validate($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_tcx_trackfield_valuetypes())) { return; }
+
+  _trackfield_tcx_setcsv($item);
+  if (!$item['value']) {
+    return t('Invalid tcx or no paths found in tcx.');
+  }
+  return trackfield_csv_trackfield_validate($item, $node);
+}
+
+function trackfield_tcx_trackfield_submit($item, $node) {
+  $valuetype = $item['valuetype'];
+  if (!array_key_exists($valuetype, trackfield_tcx_trackfield_valuetypes())) { return; }
+
+  _trackfield_tcx_setcsv($item);
+  return trackfield_csv_trackfield_submit($item, $node);
+}
+
+?>

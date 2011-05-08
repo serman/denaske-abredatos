@@ -1,0 +1,116 @@
+#block-finder-finder_1 {
+float:right;
+margin-left:35px;
+margin-top:5px;
+position:relative;
+width:500px;
+z-index:99;
+overflow:visible;
+}
+#finder-block-1 .finder-view-wrapper {
+margin:0 10px;
+}
+#finder-block-1 #finder-admin-links-1 {
+display:none;
+}
+#finder-block-1 .finder-view-wrapper .finder-form {
+-moz-border-radius:10px 10px 10px 10px;
+background:url("../img/search.png") no-repeat scroll 5px 8px #FFFFFF;
+border:5px solid #DDDDDD;
+height:26px;
+line-height:25px;
+padding:3px;
+width:460px;
+}
+#finder-block-1 .finder-view-wrapper .finder-form label {
+display:none;
+}
+#finder-block-1 .finder-view-wrapper .finder-form input#edit-1, #finder-block-1 .finder-view-wrapper .finder-form input#edit-1-2, #finder-block-1 .finder-view-wrapper .finder-form input#edit-1-1, #finder-block-1 .finder-view-wrapper .finder-form input.form-text {
+background:none repeat scroll 0 0 transparent;
+border:0 none;
+padding-left:25px;
+}
+#finder-block-1 .finder-view-wrapper .finder-form input#edit-1:focus, #finder-block-1 .finder-view-wrapper .finder-form input.form-text:focus {
+outline:0 none;
+}
+#finder-block-1 .finder-view-wrapper .finder-form .form-item {
+float:left;
+margin:0;
+width:375px;
+}
+#finder-block-1 .finder-view-wrapper .finder-form input.form-submit {
+-moz-border-radius:5px 5px 5px 5px;
+cursor:pointer;
+float:right;
+height:26px;
+margin-top:0;
+overflow:hidden;
+padding:0 2px 2px;
+text-transform:uppercase;
+width:79px;
+color:#fff;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete,
+#finder-block-1 #autocomplete {
+-moz-border-radius-bottomleft:10px;
+-moz-border-radius-bottomright:10px;
+background-color:#FFFFFF;
+border-color:-moz-use-text-color #DDDDDD #DDDDDD;
+border-right:5px solid #DDDDDD;
+border-style:none solid solid;
+border-width:0 5px 5px;
+display:block;
+margin-left:-8px;
+margin-top:26px !important;
+padding-top:10px;
+position:absolute !important;
+width:466px !important;
+z-index:100;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li:hover {
+background:none repeat scroll 0 0 transparent;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li {
+border-top:1px solid #DDDDDD;
+clear:both;
+margin:0 5px;
+overflow:hidden;
+padding-top:5px;
+white-space:normal;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .imagen {
+float:left;
+margin-right:20px;
+width:70px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .titulo {
+float:left;
+margin-right:20px;
+padding-top:15px;
+width:150px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .precio {
+color:#993333;
+float:left;
+font-size:18px;
+height:25px;
+margin-top:18px;
+width:90px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .add-to-cart {
+float:right;
+margin-top:15px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .add-to-cart input.form-submit {
+background:url("../img/d_buscar/add_cart_finder.png") no-repeat scroll 0 0 transparent;
+height:34px;
+width:90px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .add-to-cart input.form-submit:hover {
+background-position:0 -35px;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li.selected {
+color:inherit;
+}
+#finder-block-1 .finder-view-wrapper #autocomplete li .titulo a {
+}

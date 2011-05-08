@@ -1,0 +1,38 @@
+<?php
+// $Id: kml.module,v 1.8.2.2 2010/06/10 17:36:50 tmcw Exp $
+
+/**
+ * @file
+ * KML module.
+ */
+
+/**
+ * Implementation of hook_views_api().
+ */
+function kml_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'kml') .'/views',
+  );
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function kml_theme() {
+  $path = drupal_get_path('module', 'kml');
+  return array(
+    'kml_placemark' => array(
+      'arguments' => array('point' => array(), 'points' => array()),
+      'file' => 'kml_views.theme.inc',
+      'template' => 'kml-placemark',
+      'path' => $path . "/views",
+    ),
+    'kml_style' => array(
+      'arguments' => array('points' => array()),
+      'file' => 'kml_style.theme.inc',
+      'template' => 'kml-style',
+      'path' => "$path/views",
+    ),
+  );
+}

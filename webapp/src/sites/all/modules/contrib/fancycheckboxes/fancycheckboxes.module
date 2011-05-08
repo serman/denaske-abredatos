@@ -1,0 +1,142 @@
+<?php
+
+/**
+ * @file
+ * Replaces default checkboxes with fancy on/off switches under configurable pages.
+ *
+ * jQuery code from http://github.com/tdreyno/iphone-style-checkboxes
+ */
+
+/**
+ * Implements hook_init().
+ *
+ * Check current path to see if code should activate.
+ */
+function fancycheckboxes_init() {
+  $default_paths = _fancycheckboxes_default_paths();
+  $pages = variable_get('fancycheckboxes_paths', $default_paths);
+  $page_match = FALSE;
+  // Convert the Drupal path to lowercase
+  $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+
+  // Always activate on configuration page.
+  if ($path == "admin/settings/fancycheckboxes") {
+    $page_match = TRUE;
+  }
+  else {
+    // Match path if necessary.
+    if ($pages) {
+      // Convert path to lowercase. This allows comparison of the same path
+      // with different case. Ex: /Page, /page, /PAGE.
+      $pages = drupal_strtolower($pages);
+      if (variable_get('fancycheckboxes_visibility', BLOCK_VISIBILITY_LISTED) < BLOCK_VISIBILITY_PHP) {
+        // Compare the lowercase internal and lowercase path alias (if any).
+        $page_match = drupal_match_path($path, $pages);
+        if ($path != $_GET['q']) {
+          $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+        }
+        $page_match = !(variable_get('fancycheckboxes_visibility', BLOCK_VISIBILITY_LISTED) xor $page_match);
+      }
+      elseif (module_exists('php')) {
+        $page_match = php_eval(variable_get('fancycheckboxes_paths', $default_paths));
+      }
+      else {
+        $page_match = FALSE;
+      }
+    }
+  }
+  
+  if ($page_match) {
+    drupal_add_js(drupal_get_path('module', 'fancycheckboxes') . '/fancycheckboxes.js');
+    drupal_add_css(drupal_get_path('module', 'fancycheckboxes') . '/fancycheckboxes.css');
+  }
+
+}
+
+/**
+ * Implements hook_menu().
+ */
+function fancycheckboxes_menu() {
+  $items['admin/settings/fancycheckboxes'] = array(
+    'title' => 'Fancy Checkboxes',
+    'description' => t('Replace default checkboxes with fancy on/off switches under configurable pages.'),
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fancycheckboxes_admin'),
+  );
+  return $items;
+}
+
+/**
+ * Configuration form.
+ */
+function fancycheckboxes_admin() {
+
+  drupal_set_title(t('Fancy Checkboxes'));
+
+  $form = array();
+
+  $form['demo'] = array(
+    '#prefix' => '<noscript><div class="messages warning">'
+      . t('Javascript must be enabled for Fancy Checkboxes to display properly.')
+      . '</div></noscript>',
+    '#type' => 'fieldset',
+    '#title' => t('Fancy Checkboxes demo'),
+  );
+  $form['demo']['fancycheckboxes_demo1'] = array(
+    '#title' => t('Normal checkbox'),
+    '#description' => t('Description for checkbox.'),
+    '#type' => 'checkbox',
+    '#default_value' => TRUE,
+  );
+  $form['demo']['fancycheckboxes_demo2'] = array(
+    '#title' => t('Disabled checkbox'),
+    '#description' => t('Description for checkbox.'),
+    '#type' => 'checkbox',
+    '#default_value' => TRUE,
+    '#disabled' => TRUE,
+  );
+
+  $access = user_access('use PHP for settings');
+  $options = array(
+    BLOCK_VISIBILITY_NOTLISTED => t('All pages except those listed'),
+    BLOCK_VISIBILITY_LISTED => t('Only the listed pages'),
+  );
+  $description = t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>'));
+
+  if (module_exists('php') && $access) {
+    $options += array(BLOCK_VISIBILITY_PHP => t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'));
+    $title = t('Pages or PHP code');
+    $description .= ' ' . t('If the PHP option is chosen, enter PHP code between %php. Note that executing incorrect PHP code can break your Drupal site.', array('%php' => '<?php ?>'));
+  }
+  else {
+    $title = t('Pages');
+  }
+  $form['fancycheckboxes_visibility'] = array(
+    '#type' => 'radios',
+    '#title' => t('Activate Fancy Checkboxes on specific pages'),
+    '#options' => $options,
+    '#default_value' => variable_get('fancycheckboxes_visibility', BLOCK_VISIBILITY_LISTED),
+  );
+  $form['fancycheckboxes_paths'] = array(
+    '#type' => 'textarea',
+    '#title' => '<span class="element-invisible">' . $title . '</span>',
+    '#default_value' => variable_get('fancycheckboxes_paths', _fancycheckboxes_default_paths()),
+    '#description' => $description,
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Return a string with default activation paths.
+ */
+function _fancycheckboxes_default_paths() {
+  return "admin/build/modules
+admin/build/themes*
+admin/user/settings
+admin/build/block/configure/*
+admin/content/taxonomy/add/*
+admin/settings/filters/*
+admin/user/permissions/*";
+}

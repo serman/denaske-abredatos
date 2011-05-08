@@ -1,0 +1,10 @@
+name = Service Connect
+description = Enable users to login with 3th party services
+package = ServiceConnect
+core = 6.x
+; Information added by drupal.org packaging script on 2011-04-05
+version = "6.x-1.0-beta1"
+core = "6.x"
+project = "serviceconnect"
+datestamp = "1302001916"
+

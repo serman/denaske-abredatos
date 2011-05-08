@@ -1,0 +1,29 @@
+<?php
+
+function trackfield_queue_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+    case 'pgsql': /* TODO: Dunno if pgsql needs to differ */
+      db_query("CREATE TABLE {trackfield_queue} (".
+        "nid integer unsigned NOT NULL,".
+        "vid integer unsigned NOT NULL,".
+        "timestamp_queued integer NOT NULL,".
+        "timestamp_processed integer,".
+        "status integer unsigned NOT NULL,".
+        "PRIMARY KEY (nid, vid, timestamp_queued))");
+        
+      break;
+
+    default:
+      break;
+  } // End case
+}
+
+function trackfield_queue_uninstall() {
+  if (db_table_exists('trackfield_queue')) {
+    db_query("DROP TABLE {trackfield_queue}");
+  }
+}
+
+?>

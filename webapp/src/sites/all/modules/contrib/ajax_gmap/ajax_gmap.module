@@ -1,0 +1,45 @@
+<?php
+// $Id$
+
+/**
+ *  Implementation of hook_ajax_data_alter()
+ */
+function ajax_gmap_ajax_data_alter(&$data, $mod, &$view) {
+  if ($mod == 'views') {
+    if ($view->plugin_name == 'gmap' && ajax_gmap_include()) {
+      $data->dom_id = $view->dom_id;//helps to find the view in the page. Also support old method?
+      $data->name = $view->name;
+      $data->__callbacks[] = _ajax_gmap_js_callback();
+      //get settings
+      $javascript = drupal_add_js(NULL, NULL, NULL);
+      $data->mapset = array();
+      foreach ($javascript as $scope => $arr) {
+        if (isset($arr['setting'])) {
+          foreach ($arr['setting'] as $set) {
+            if (isset($set['gmap'])) {
+              $data->mapset = array_merge($data->mapset, $set['gmap']);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ *  Implementation of hook_views_pre_render()
+ */
+function ajax_gmap_views_pre_render(&$view) {
+  if ($view->use_ajax && $view->plugin_name == 'gmap' && ajax_gmap_include()) {
+    $path = drupal_get_path('module', 'ajax_gmap');
+    drupal_add_js($path .'/ajax_gmap.js');
+    drupal_add_js($path .'/' . _ajax_gmap_js_library());
+  }
+}
+
+/**
+ *  Load ajax_gmap library
+ */
+function ajax_gmap_include() {
+  return module_load_include('php', 'ajax_gmap', 'library/ajax_gmap') !== FALSE;
+}

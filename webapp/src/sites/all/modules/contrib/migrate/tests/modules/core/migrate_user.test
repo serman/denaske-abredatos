@@ -1,0 +1,462 @@
+<?php
+/**
+ * @file
+ * Tests for user migration
+ *
+ */
+
+class MigrateUserTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Users'),
+      'description' => t('Test migration support for users'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $this->migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED, 'administer users'));
+    $this->drupalLogin($this->migrate_user);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test user migration
+   */
+  function testUserProcessing() {
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'username' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'password' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'email' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+        'registered' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+        ),
+        'accessed' => array(
+          'type' => 'datetime',
+          'not null' => TRUE,
+        ),
+        'loggedin' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'roles' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+        'status' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        )
+      ),
+      'primary key' => array('id'),
+    );
+    $tablename = 'migrate_user_sample';
+    db_create_table($ret, $tablename, $schema);
+    // Creates default view '$tablename'
+    tw_add_tables($tablename, TRUE);
+    views_discover_default_views(TRUE);
+
+
+    $sql = "INSERT INTO {" . $tablename . "}
+            (id, username, password, email, registered, accessed, loggedin, roles, status)
+            VALUES(%d, '%s', '%s', '%s', %d, '%s', %d, '%s', %d)";
+    db_query($sql,
+             893, 'user1', 'password1', 'user1@example.com',
+             mktime(13, 28, 51, 10, 15, 2009), '2009-11-18 03:15:32',
+             mktime(1, 8, 21, 11, 18, 2009), '', 1);
+    db_query($sql,
+             52893, 'user2', 'password2', 'user2@google.com',
+             mktime(1, 1, 0, 1, 1, 1998), '2003-02-28 19:30:50',
+             mktime(13, 15, 48, 2, 28, 2003), '', 0);
+    db_query($sql,
+             394893, 'user3', 'password3', 'user3@drupal.org',
+             mktime(5, 15, 28, 12, 1, 2009), '2009-12-01 05:15:28',
+             mktime(5, 15, 28, 12, 1, 2009), '', 1);
+
+    // Create content set
+    $content_set = new stdClass;
+    $content_set->machine_name = 'user_test';
+    $content_set->description = 'User test';
+    $content_set->contenttype = 'user';
+    $content_set->view_name = $tablename;
+    $content_set->sourcekey = 'id';
+    $content_set->weight = -2;
+    $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+    cache_clear_all('schema', 'cache');
+    if ($this->assertNotNull($mcsid, t('Create simple user content set'))) {
+      // Add mappings to content set
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_username';
+      $edit->destfield = 'name';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup username mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_password';
+      $edit->destfield = 'pass';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup password mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_email';
+      $edit->destfield = 'mail';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup email mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_registered';
+      $edit->destfield = 'created';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup created mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_accessed';
+      $edit->destfield = 'access';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup last access mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_loggedin';
+      $edit->destfield = 'login';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup last login mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_roles';
+      $edit->destfield = 'roles';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup roles mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_status';
+      $edit->destfield = 'status';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup status mapping'));
+
+      $edit = array("importing[$mcsid]" => $mcsid);
+      $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+      if (!$this->assertText('Imported 3 in', t('Migration completed successfully'))) {
+        $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+            $this->content, $matches);
+        $this->error('Actual messages: ' . $matches[1]);
+        return;
+      }
+      else {
+        $account = user_load(array('name' => 'user1'));
+        $uid1 = $account->uid;
+        if (!$this->assertEqual($account->pass, md5('password1'), t('Validate first user password'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->mail, 'user1@example.com', t('Validate first user email'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->created, mktime(13, 28, 51, 10, 15, 2009), t('Validate first user created'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->access, mktime(3, 15, 32, 11, 18, 2009), t('Validate first user access'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->login, mktime(1, 8, 21, 11, 18, 2009), t('Validate first user login'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->status, 1, t('Validate first user status'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+
+        $account = user_load(array('name' => 'user2'));
+        $uid2 = $account->uid;
+        if (!$this->assertEqual($account->pass, md5('password2'), t('Validate second user password'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->mail, 'user2@google.com', t('Validate second user email'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->created, mktime(1, 1, 0, 1, 1, 1998), t('Validate second user created'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->access, mktime(19, 30, 50, 2, 28, 2003), t('Validate second user access'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->login, mktime(13, 15, 48, 2, 28, 2003), t('Validate second user login'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->status, 0, t('Validate second user status'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+
+        $account = user_load(array('name' => 'user3'));
+        $uid3 = $account->uid;
+        if (!$this->assertEqual($account->pass, md5('password3'), t('Validate third user password'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->mail, 'user3@drupal.org', t('Validate third user email'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->created, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user created'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->access, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user access'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->login, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user login'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+        if (!$this->assertEqual($account->status, 1, t('Validate third user status'))) {
+          $this->error('Actual user: ' . print_r($account, TRUE));
+        }
+
+        // Test updating of the content set
+        $sql = "UPDATE {" . $tablename . "}
+                SET username='%s', password='%s', email='%s'
+                WHERE id=%d";
+        db_query($sql, 'newuser1', 'newpassword1', 'newemail@example.com', 893);
+        $sql = "UPDATE {" . $tablename . "}
+                SET registered=%d, accessed='%s'
+                WHERE id=%d";
+        db_query($sql, mktime(5, 6, 7, 10, 11, 1999), '2008-07-12 12:10:09', 52893);
+        $sql = "UPDATE {" . $tablename . "}
+                SET loggedin=%d, roles='%s', status=%d
+                WHERE id=%d";
+        db_query($sql, mktime(8, 25, 48, 12, 4, 2009), '', 0, 394893);
+
+        $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+        $edit = array("importing[$mcsid]" => $mcsid, 'update' => 1);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
+          $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+              $this->content, $matches);
+          $this->error('Actual messages: ' . $matches[1]);
+          return;
+        }
+        else {
+          $account = user_load(array('name' => 'newuser1'));
+          $this->assertEqual($account->uid, $uid1, 'User updated, not inserted');
+          if (!$this->assertEqual($account->pass, md5('newpassword1'), t('Validate first user password'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->mail, 'newemail@example.com', t('Validate first user email'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->created, mktime(13, 28, 51, 10, 15, 2009), t('Validate first user created'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->access, mktime(3, 15, 32, 11, 18, 2009), t('Validate first user access'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->login, mktime(1, 8, 21, 11, 18, 2009), t('Validate first user login'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->status, 1, t('Validate first user status'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+
+          $account = user_load(array('name' => 'user2'));
+          $this->assertEqual($account->uid, $uid2, 'User updated, not inserted');
+          if (!$this->assertEqual($account->pass, md5('password2'), t('Validate second user password'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->mail, 'user2@google.com', t('Validate second user email'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->created, mktime(5, 6, 7, 10, 11, 1999), t('Validate second user created'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->access, mktime(12, 10, 9, 7, 12, 2008), t('Validate second user access'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->login, mktime(13, 15, 48, 2, 28, 2003), t('Validate second user login'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->status, 0, t('Validate second user status'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+
+          $account = user_load(array('name' => 'user3'));
+          $this->assertEqual($account->uid, $uid3, 'User updated, not inserted');
+          if (!$this->assertEqual($account->pass, md5('password3'), t('Validate third user password'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->mail, 'user3@drupal.org', t('Validate third user email'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->created, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user created'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->access, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user access'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->login, mktime(8, 25, 48, 12, 4, 2009), t('Validate third user login'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+          if (!$this->assertEqual($account->status, 0, t('Validate third user status'))) {
+            $this->error('Actual user: ' . print_r($account, TRUE));
+          }
+        }
+
+        // Test an update content set
+        db_query('TRUNCATE TABLE {' . $tablename . '}');
+        $sql = 'INSERT INTO {' . $tablename . "}
+                (id, username)
+                VALUES(%d, '%s')";
+        db_query($sql, $uid1, 'newusername1');
+        db_query($sql, $uid2, 'newusername2');
+        db_query($sql, $uid3, 'newusername3');
+        $upd_content_set = new stdClass;
+        $upd_content_set->machine_name = 'user_update_test';
+        $upd_content_set->description = 'User update test';
+        $upd_content_set->contenttype = 'user';
+        $upd_content_set->view_name = $tablename;
+        $upd_content_set->sourcekey = 'id';
+        $upd_content_set->weight = 3;
+        $upd_mcsid = migrate_save_content_set($upd_content_set, array('base_table' => $tablename));
+        cache_clear_all('schema', 'cache');
+        if ($this->assertNotNull($upd_mcsid, t('Create update content set'))) {
+          // Add mappings to content set
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = 'id';
+          $edit->destfield = 'uid';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = $tablename . '_username';
+          $edit->destfield = 'name';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = array("importing[$upd_mcsid]" => $upd_mcsid);
+          $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+          if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
+            $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                $this->content, $matches);
+            $this->error('Actual messages: ' . $matches[1]);
+            return;
+          }
+          else {
+            $account = user_load(array('name' => 'newusername1'));
+            $this->assertEqual($account->uid, $uid1, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('newpassword1'), t('Validate first user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'newemail@example.com', t('Validate first user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(13, 28, 51, 10, 15, 2009), t('Validate first user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(3, 15, 32, 11, 18, 2009), t('Validate first user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(1, 8, 21, 11, 18, 2009), t('Validate first user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 1, t('Validate first user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+
+            $account = user_load(array('name' => 'newusername2'));
+            $this->assertEqual($account->uid, $uid2, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('password2'), t('Validate second user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'user2@google.com', t('Validate second user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(5, 6, 7, 10, 11, 1999), t('Validate second user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(12, 10, 9, 7, 12, 2008), t('Validate second user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(13, 15, 48, 2, 28, 2003), t('Validate second user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 0, t('Validate second user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+
+            $account = user_load(array('name' => 'newusername3'));
+            $this->assertEqual($account->uid, $uid3, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('password3'), t('Validate third user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'user3@drupal.org', t('Validate third user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(8, 25, 48, 12, 4, 2009), t('Validate third user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 0, t('Validate third user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+          }
+        }
+
+        // Test clearing of the content set
+        $content_set->clearing = TRUE;
+        $content_set->importing = FALSE;
+        $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+        $edit = array("clearing[$mcsid]" => $mcsid);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText(t('Deleted 3 in'), t('Clearing completed successfully'))) {
+          $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+              $this->content, $matches);
+          $this->error('Actual messages: ' . $matches[1]);
+          return;
+        }
+        else {
+          // Don't count the anon and admin users, or the one we're running under
+          $count = db_result(db_query("SELECT COUNT(*) FROM {users}
+                                       WHERE uid > 1 AND uid <> %d",
+                                      $this->migrate_user->uid));
+          if (!$this->assertEqual($count, 0, t('All migrated users cleared'))) {
+            $this->error(t('!count users exist', array('!count' => $count)));
+          }
+          $maptable = migrate_map_table_name($mcsid);
+          $count = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+          $this->assertEqual($count, 0, t('Map table cleared'));
+        }
+      }
+    }
+  }
+}

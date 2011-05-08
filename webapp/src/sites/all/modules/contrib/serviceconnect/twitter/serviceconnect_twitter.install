@@ -1,0 +1,97 @@
+<?php
+
+function serviceconnect_twitter_install() {
+  drupal_install_schema('serviceconnect_twitter');
+}
+
+function serviceconnect_twitter_uninstall() {
+  drupal_uninstall_schema('serviceconnect_twitter');
+}
+
+function serviceconnect_twitter_schema() {
+  $schema = array();
+  
+  $schema['serviceconnect_twitter_auth_session'] = array(
+    'fields' => array(
+      'sid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE, // Use 0 for anonymouse
+      ),
+      'link' => array(
+        'type' => 'int', // 0 for normal login, 1 for link Twitter to user
+        'size' => 'tiny',
+        'not NULL' => TRUE,
+      ),
+      'phase' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+        'default' => 1,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'token_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'service_uid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+    ),
+    'primary key' => array('sid')
+  );
+  
+  $schema['serviceconnect_user_twitter'] = array(
+    'fields' => array(
+      'scpid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'token_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'profile_image_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not NULL' => TRUE,
+      ),
+      'friendscount' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not NULL' => TRUE,
+      ),
+    ),
+    'primary key' => array('scpid'),
+  );
+  
+  return $schema;
+}

@@ -1,0 +1,6 @@
+; $Id$
+name = Gestión con mapas
+description = Módulo para interconectar los datos con gmap
+dependencies[] = gmap
+package = denaske
+core = 6.x

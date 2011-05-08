@@ -1,0 +1,12 @@
+name = Track Queue
+description = "Queues processing of trackfield data over a certain size threshold."
+version = "5.x-0.1-dev"
+dependencies = content trackfield
+package = CCK
+
+; Information added by drupal.org packaging script on 2009-06-07
+version = "6.x-1.0"
+core = "6.x"
+project = "trackfield"
+datestamp = "1244383562"
+

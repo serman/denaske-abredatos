@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * Implementation of hook_enable().
+ */
+function dbtng_enable() {
+  // Clear all cache as recommended by autoload.
+  cache_clear_all();
+  drupal_install_schema('dbtng');
+  db_query("INSERT INTO {dbtng_sequences} VALUES (1);");
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function dbtng_schema() {
+  $schema = array();
+
+  $schema['dbtng_sequences'] = array(
+    'description' => 'Stores IDs.',
+    'fields' => array(
+      'value' => array(
+        'description' => 'The value of the sequence.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('value'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function dbtng_uninstall() {
+  drupal_uninstall_schema('dbtng');
+}
